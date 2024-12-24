@@ -1,5 +1,7 @@
 package bgu.spl.mics;
 
+import java.util.Map;
+
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -22,12 +24,16 @@ public abstract class MicroService implements Runnable {
 
     private boolean terminated = false;
     private final String name;
+    private Map<Class<? extends Message>, Callback<?>> Ecallback;
+    private Map<Class<? extends Message>, Callback<?>> Bcallback;
+    
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
      *             does not have to be unique)
      */
-    public MicroService(String name) {
+    public MicroService(String name)
+    {
         this.name = name;
     }
 
@@ -52,8 +58,11 @@ public abstract class MicroService implements Runnable {
      *                 {@code type} are taken from this micro-service message
      *                 queue.
      */
-    protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-        //TODO: implement this.
+    protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback)
+    {
+        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+        Ecallback.put(type, callback);
+        mBusImpl.subscribeEvent(type, this);
     }
 
     /**
@@ -76,8 +85,11 @@ public abstract class MicroService implements Runnable {
      *                 {@code type} are taken from this micro-service message
      *                 queue.
      */
-    protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-        //TODO: implement this.
+    protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback)
+    {
+        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+        Bcallback.put(type, callback);
+        mBusImpl.subscribeBroadcast(type, this);
     }
 
     /**
@@ -92,9 +104,10 @@ public abstract class MicroService implements Runnable {
      *         			micro-service processing this event.
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
-    protected final <T> Future<T> sendEvent(Event<T> e) {
-        //TODO: implement this.
-        return null; //TODO: delete this line :)
+    protected final <T> Future<T> sendEvent(Event<T> e)
+    {
+        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+        return mBusImpl.sendEvent(e);
     }
 
     /**
@@ -103,8 +116,10 @@ public abstract class MicroService implements Runnable {
      * <p>
      * @param b The broadcast message to send
      */
-    protected final void sendBroadcast(Broadcast b) {
-        //TODO: implement this.
+    protected final void sendBroadcast(Broadcast b)
+    {
+        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+        mBusImpl.sendBroadcast(b);
     }
 
     /**
@@ -117,8 +132,10 @@ public abstract class MicroService implements Runnable {
      * @param result The result to resolve the relevant Future object.
      *               {@code e}.
      */
-    protected final <T> void complete(Event<T> e, T result) {
-        //TODO: implement this.
+    protected final <T> void complete(Event<T> e, T result)
+    {
+        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+        mBusImpl.complete(e, result);
     }
 
     /**
@@ -130,7 +147,8 @@ public abstract class MicroService implements Runnable {
      * Signals the event loop that it must terminate after handling the current
      * message.
      */
-    protected final void terminate() {
+    protected final void terminate()
+    {
         this.terminated = true;
     }
 
@@ -138,7 +156,8 @@ public abstract class MicroService implements Runnable {
      * @return the name of the service - the service name is given to it in the
      *         construction time and is used mainly for debugging purposes.
      */
-    public final String getName() {
+    public final String getName()
+    {
         return name;
     }
 
@@ -147,11 +166,27 @@ public abstract class MicroService implements Runnable {
      * otherwise you will end up in an infinite loop.
      */
     @Override
-    public final void run() {
+    public final void run()
+    {
         initialize();
-        while (!terminated) {
-            System.out.println("NOT IMPLEMENTED!!!"); //TODO: you should delete this line :)
+        while (!terminated)
+        {
+            try
+            {
+                MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+                Message m = mBusImpl.awaitMessage(this);
+                if(m instanceof Event)
+                {
+                    Callback<Message> callback = (Callback<Message>)Ecallback.get(m.getClass());
+                    if (callback != null)
+                        callback.call(m);
+                }
+            } 
+            catch (Exception e)
+            {
+                terminate();
+            }
         }
+        MessageBusImpl.getInstance().unregister(this);
     }
-
 }

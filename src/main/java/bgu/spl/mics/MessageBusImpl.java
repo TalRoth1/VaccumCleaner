@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -25,14 +26,14 @@ public class MessageBusImpl implements MessageBus {
 		queues = new ConcurrentHashMap<>();
 		futures = new ConcurrentHashMap<>();
 	}
-	public MessageBusImpl getInstance()
+	public static synchronized MessageBusImpl getInstance()
 	{
 		if(instance.equals(null))
 			instance = new MessageBusImpl();
 		return instance;
 	}
 	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) 
+	public synchronized <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) 
 	{
 		if(!Esubscribers.containsKey(type))
 			Esubscribers.put(type, new LinkedList<MicroService>());
@@ -40,7 +41,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m)
+	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m)
 	{
 		if(!Bsubscribers.containsKey(type))
 			Bsubscribers.put(type, new LinkedList<MicroService>());
@@ -48,7 +49,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public <T> void complete(Event<T> e, T result)
+	public synchronized <T> void complete(Event<T> e, T result)
 	{
 		Future<T> future = null;
 		if(futures.containsKey(e))
@@ -70,7 +71,7 @@ public class MessageBusImpl implements MessageBus {
 		}
 	}
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) 
+	public synchronized <T> Future<T> sendEvent(Event<T> e) 
 	{
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
@@ -89,23 +90,33 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void register(MicroService m) {
-		// TODO Auto-generated method stub
-
+	public synchronized void register(MicroService m)
+	{
+		if(m == null)
+			return;
+		if(!queues.containsKey(m))
+			queues.put(m, new LinkedBlockingQueue<Message>());
 	}
 
 	@Override
-	public void unregister(MicroService m) {
-		// TODO Auto-generated method stub
-
+	public synchronized void unregister(MicroService m) 
+	{
+		if(m == null)
+			return;
+		if(queues.containsKey(m))
+		{
+			queues.remove(m);
+			Esubscribers.values().forEach(queue -> queue.remove(m));
+			Bsubscribers.values().forEach(queue -> queue.remove(m));
+		}
 	}
 
 	@Override
-	public Message awaitMessage(MicroService m) throws InterruptedException {
-		// TODO Auto-generated method stub
-		return null;
+	public Message awaitMessage(MicroService m) throws InterruptedException
+	{
+		if(m == null || !queues.containsKey(m))
+			throw new IllegalStateException();
+		BlockingQueue<Message> queue = queues.get(m);
+		return queue.take();
 	}
-
-	
-
 }
