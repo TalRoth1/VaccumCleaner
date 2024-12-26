@@ -5,7 +5,9 @@ import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
-import bgu.spl.mics.Callback;
+import bgu.spl.mics.application.objects.STATUS;
+
+import java.util.List;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -39,9 +41,18 @@ public class CameraService extends MicroService {
     {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            if(time == cam.getObjects().getTime() + cam.getFreq())
+            if (cam.getStat() != STATUS.UP)
             {
-                sendEvent(new DetectObjectsEvent(cam.getObjects()));
+                terminate();
+                return;
+            }
+            List<DetectedObject> lst = cam.getObjects(time + cam.getFreq());
+            if(lst != null)
+            {
+                for(DetectedObject obj : lst)
+                {
+                    sendEvent(new DetectObjectsEvent(obj));
+                }
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
