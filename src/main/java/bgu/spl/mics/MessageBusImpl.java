@@ -7,6 +7,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import bgu.spl.mics.application.messages.TerminatedBroadcast;
+
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
  * Write your implementation here!
@@ -14,7 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  * All other methods and members you add the class must be private.
  */
 public class MessageBusImpl implements MessageBus {
-	private static MessageBusImpl instance;
+	private static class SingeltonHolder
+	{
+		private static MessageBusImpl instance = new MessageBusImpl();
+	}
 	private Map<Class<? extends Message>, Queue<MicroService>> Esubscribers;
 	private Map<Class<? extends Message>, Queue<MicroService>> Bsubscribers;
 	private Map<MicroService, BlockingQueue<Message>> queues; 
@@ -26,14 +31,12 @@ public class MessageBusImpl implements MessageBus {
 		queues = new ConcurrentHashMap<>();
 		futures = new ConcurrentHashMap<>();
 	}
-	public static synchronized MessageBusImpl getInstance()
+	public static MessageBusImpl getInstance()
 	{
-		if(instance.equals(null))
-			instance = new MessageBusImpl();
-		return instance;
+		return SingeltonHolder.instance;
 	}
 	@Override
-	public synchronized <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) 
+	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) 
 	{
 		if(!Esubscribers.containsKey(type))
 			Esubscribers.put(type, new LinkedList<MicroService>());
@@ -41,7 +44,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m)
+	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m)
 	{
 		if(!Bsubscribers.containsKey(type))
 			Bsubscribers.put(type, new LinkedList<MicroService>());
@@ -49,7 +52,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public synchronized <T> void complete(Event<T> e, T result)
+	public <T> void complete(Event<T> e, T result)
 	{
 		Future<T> future = null;
 		if(futures.containsKey(e))
@@ -71,7 +74,7 @@ public class MessageBusImpl implements MessageBus {
 		}
 	}
 	@Override
-	public synchronized <T> Future<T> sendEvent(Event<T> e) 
+	public <T> Future<T> sendEvent(Event<T> e) 
 	{
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
@@ -90,16 +93,17 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public synchronized void register(MicroService m)
+	public void register(MicroService m)
 	{
 		if(m == null)
 			return;
 		if(!queues.containsKey(m))
 			queues.put(m, new LinkedBlockingQueue<Message>());
+		Bsubscribers.get(TerminatedBroadcast.class).add(m);
 	}
 
 	@Override
-	public synchronized void unregister(MicroService m) 
+	public void unregister(MicroService m) 
 	{
 		if(m == null)
 			return;

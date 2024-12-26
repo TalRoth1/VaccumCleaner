@@ -1,6 +1,11 @@
 package bgu.spl.mics.application.services;
+import bgu.spl.mics.application.messages.CrashedBroadcast;
+import bgu.spl.mics.application.messages.DetectObjectsEvent;
+import bgu.spl.mics.application.messages.TerminatedBroadcast;
+import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.objects.Camera;
-
+import bgu.spl.mics.application.objects.DetectedObject;
+import bgu.spl.mics.Callback;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -11,15 +16,17 @@ import bgu.spl.mics.MicroService;
  * the system's StatisticalFolder upon sending its observations.
  */
 public class CameraService extends MicroService {
-
+    private final Camera cam;
+    private int time;
     /**
      * Constructor for CameraService.
      *
      * @param camera The Camera object that this service will use to detect objects.
      */
-    public CameraService(Camera camera) {
-        super("Change_This_Name");
-        // TODO Implement this
+    public CameraService(Camera camera) 
+    {
+        super("Camera" + camera.getId());
+        this.cam = camera;
     }
 
     /**
@@ -28,7 +35,20 @@ public class CameraService extends MicroService {
      * DetectObjectsEvents.
      */
     @Override
-    protected void initialize() {
-        // TODO Implement this
+    protected void initialize()
+    {
+        subscribeBroadcast(TickBroadcast.class, tick -> {
+            this.time = tick.getTick();
+            if(time == cam.getObjects().getTime() + cam.getFreq())
+            {
+                sendEvent(new DetectObjectsEvent(cam.getObjects()));
+            }
+        }); 
+        subscribeBroadcast(TerminatedBroadcast.class, term -> {
+            this.terminate();
+        });
+        subscribeBroadcast(CrashedBroadcast.class, crash ->{
+            this.terminate();
+        });
     }
 }
