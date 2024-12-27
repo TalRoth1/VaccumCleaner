@@ -51,6 +51,7 @@ public class MessageBusImpl implements MessageBus {
 		Bsubscribers.get(type).add(m);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> void complete(Event<T> e, T result)
 	{
@@ -59,6 +60,8 @@ public class MessageBusImpl implements MessageBus {
 			future = (Future<T>)futures.get(e);
 		if(future != null)
 			future.resolve(result);
+		future = (Future<T>) futures.remove(e);
+	
 	}
 
 	@Override
@@ -74,22 +77,24 @@ public class MessageBusImpl implements MessageBus {
 		}
 	}
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) 
+	public <T> Future<T> sendEvent(Event<T> e) /// chancge sync
 	{
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
-			return null;
-		MicroService head = ms.poll();
-		if (head == null)
-			return null;
-		BlockingQueue<Message> que = queues.get(head);
-		if(que == null || que.isEmpty())
-			return null;
-		ms.offer(head);
-		que.offer(e);
-		Future<T> future = new Future<>();
-		futures.put(e, future);
-		return future;
+			return null;	
+		synchronized (ms) {	
+			MicroService head = ms.poll();
+			if (head == null)
+				return null;
+			BlockingQueue<Message> que = queues.get(head);
+			if(que == null || que.isEmpty())
+				return null;
+			ms.offer(head);
+			que.offer(e);
+			Future<T> future = new Future<>();
+			futures.put(e, future);
+			return future;
+		}	
 	}
 
 	@Override
@@ -119,7 +124,7 @@ public class MessageBusImpl implements MessageBus {
 	public Message awaitMessage(MicroService m) throws InterruptedException
 	{
 		if(m == null || !queues.containsKey(m))
-			throw new IllegalStateException();
+			throw new IllegalStateException("MicroService is not registered");
 		BlockingQueue<Message> queue = queues.get(m);
 		return queue.take();
 	}

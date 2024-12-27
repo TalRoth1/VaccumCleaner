@@ -31,22 +31,20 @@ public class TimeService extends MicroService
      * Starts broadcasting TickBroadcast messages and terminates after the specified duration.
      */
     @Override
-    protected void initialize() 
+    protected void initialize() // updated
     {
-        for(int tick = 1; tick < duration; tick++)
-        {
-            try
-            {
-                Thread.sleep(tickTime);
-                sendBroadcast(new TickBroadcast(tick));
-            } 
-            catch (Exception e) 
-            {
+        Thread timerThread = new Thread(() -> {
+            try {
+                for (int tick = 1; tick <= tickTime; tick++) {
+                    sendBroadcast(new TickBroadcast(tick));
+                    Thread.sleep(duration);
+                }
+                sendBroadcast(new TerminatedBroadcast());
+                terminate();
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                super.terminate();
             }
-        }
-        sendBroadcast(new TerminatedBroadcast());
-        super.terminate();
+        });
+        timerThread.start();
     }
 }

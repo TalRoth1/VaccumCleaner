@@ -3,8 +3,6 @@ package bgu.spl.mics;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import bgu.spl.mics.application.messages.TerminatedBroadcast;
-
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -29,6 +27,8 @@ public abstract class MicroService implements Runnable {
     private final String name;
     private Map<Class<? extends Message>, Callback<?>> Ecallback;
     private Map<Class<? extends Message>, Callback<?>> Bcallback;
+    private final MessageBus messageBus;
+
     
 
     /**
@@ -40,6 +40,8 @@ public abstract class MicroService implements Runnable {
         this.name = name;
         this.Ecallback = new ConcurrentHashMap<>();
         this.Bcallback = new ConcurrentHashMap<>();
+        this.messageBus = MessageBusImpl.getInstance();//added// 
+
     }
 
     /**
@@ -65,9 +67,9 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback)
     {
-        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+     //    MessageBusImpl mBusImpl = MessageBusImpl.getInstance();// ******* why evey time new instance
         Ecallback.put(type, callback);
-        mBusImpl.subscribeEvent(type, this);
+        messageBus.subscribeEvent(type, this);
     }
 
     /**
@@ -92,9 +94,9 @@ public abstract class MicroService implements Runnable {
      */
     public final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) // Change to protected
     {
-        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
+    //    MessageBusImpl mBusImpl = MessageBusImpl.getInstance();// ******* why evey time new instance
         Bcallback.put(type, callback);
-        mBusImpl.subscribeBroadcast(type, this);
+        messageBus.subscribeBroadcast(type, this);
     }
 
     /**
@@ -111,8 +113,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> Future<T> sendEvent(Event<T> e)
     {
-        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
-        return mBusImpl.sendEvent(e);
+        return messageBus.sendEvent(e);
     }
 
     /**
@@ -123,8 +124,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final void sendBroadcast(Broadcast b)
     {
-        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
-        mBusImpl.sendBroadcast(b);
+        messageBus.sendBroadcast(b);
     }
 
     /**
@@ -139,8 +139,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> void complete(Event<T> e, T result)
     {
-        MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
-        mBusImpl.complete(e, result);
+        messageBus.complete(e, result);
     }
 
     /**
@@ -179,10 +178,10 @@ public abstract class MicroService implements Runnable {
         {
             try
             {
-                MessageBusImpl mBusImpl = MessageBusImpl.getInstance();
-                Message m = mBusImpl.awaitMessage(this);
+                Message m = messageBus.awaitMessage(this);
                 if(m instanceof Event)
                 {
+                    @SuppressWarnings("unchecked")
                     Callback<Message> callback = (Callback<Message>)Ecallback.get(m.getClass());
                     if (callback != null)
                         callback.call(m);
@@ -194,6 +193,6 @@ public abstract class MicroService implements Runnable {
                 terminate();
             }
         }
-        MessageBusImpl.getInstance().unregister(this);
+        messageBus.unregister(this);
     }
 }

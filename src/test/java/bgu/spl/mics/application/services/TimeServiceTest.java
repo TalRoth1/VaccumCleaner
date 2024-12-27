@@ -1,13 +1,10 @@
 package bgu.spl.mics.application.services;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import bgu.spl.mics.Callback;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
-import bgu.spl.mics.example.services.ExampleBroadcastListenerService;
 
 public class TimeServiceTest 
 {
