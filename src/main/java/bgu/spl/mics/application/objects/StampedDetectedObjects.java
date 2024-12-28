@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Represents objects detected by the camera at a specific timestamp.
@@ -8,7 +9,7 @@ import java.util.LinkedList;
  */
 public class StampedDetectedObjects {
     private int time;
-    private LinkedList<DetectedObject> DetectedObjects; //Rotem needs to check if this is ok
+    private List<DetectedObject> DetectedObjects; //Rotem needs to check if this is ok
 
     public StampedDetectedObjects(int time)
     {
@@ -19,7 +20,7 @@ public class StampedDetectedObjects {
     {
         return this.time;
     }
-    public LinkedList<DetectedObject> getObjects()
+    public List<DetectedObject> getObjects()
     {
         return this.DetectedObjects;
     }

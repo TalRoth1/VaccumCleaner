@@ -10,19 +10,21 @@ import java.util.List;
 public class LandMark {
     private final String id;
     private final String description;
-    private final List<double[]> coordinates;
+    private final List<CloudPoint> coordinates;
 
-    public LandMark(String id, String description, double[] transformedCoordinates) 
+    public LandMark(String id, String description, CloudPoint [] transformedCoordinates) 
     {
         this.id = id;
         this.description = description;
         this.coordinates = new ArrayList<>();
-        this.coordinates.add(transformedCoordinates);
+        for(CloudPoint point : transformedCoordinates)
+            this.coordinates.add(point);
     }
 
-    public void updateCoordinates(double[] transformedCoordinates)
+    public void updateCoordinates(CloudPoint [] transformedCoordinates)
     {
-        this.coordinates.add(transformedCoordinates);
+        for(CloudPoint point : transformedCoordinates)
+            this.coordinates.add(point);
     }
     public String getId()
     {
@@ -34,7 +36,7 @@ public class LandMark {
         return description;
     }
 
-    public List<double[]> getCoordinates()
+    public List<CloudPoint> getCoordinates()
     {
         return coordinates;
     }

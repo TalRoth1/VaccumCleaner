@@ -17,8 +17,6 @@ public class GurionRockRunner {
      * @param args Command-line arguments. The first argument is expected to be the path to the configuration file.
      */
     public static void main(String[] args) {
-        System.out.println("Hello World!");
-
         // TODO: Parse configuration file.
         // TODO: Initialize system components and services.
         // TODO: Start the simulation.

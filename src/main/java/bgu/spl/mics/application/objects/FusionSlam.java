@@ -33,9 +33,8 @@ public class FusionSlam
         if (pose == null || trackedObject == null) {
             return;
         }
-
         String id = trackedObject.getId();
-        double[] transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
+        CloudPoint [] transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
 
         if (landmarks.containsKey(id)) {
             // Update existing landmark
@@ -63,12 +62,18 @@ public class FusionSlam
      * @param pose        The robot's current pose.
      * @return Transformed coordinates in the global frame.
      */
-    private double[] transformCoordinates(double[] coordinates, Pose pose) {
-        double x = coordinates[0];
-        double y = coordinates[1];
-        double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
-        double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
-        return new double[]{transformedX, transformedY};
+    private CloudPoint [] transformCoordinates(CloudPoint [] coordinates, Pose pose) 
+    {
+        CloudPoint [] result = new CloudPoint[coordinates.length];
+        for(int i = 0; i<coordinates.length; i++)
+        {
+            double x = coordinates[i].getX();
+            double y = coordinates[i].getY();
+            double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
+            double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
+            result[i] = new CloudPoint(transformedX, transformedY);
+        }
+        return result;
     }
     /**
      * @return The list of all landmarks.

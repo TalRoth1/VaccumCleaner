@@ -17,12 +17,9 @@ public class TrackedObject
         return this.id;
     }
 
-    public double[] getCoordinates() 
+    public CloudPoint [] getCoordinates()
     {
-        double [] result = new double[2];
-        result[0] = coordinates[0].getX();
-        result[1] = coordinates[0].getY();
-        return result;
+        return coordinates;
     }
     public int getTime()
     {

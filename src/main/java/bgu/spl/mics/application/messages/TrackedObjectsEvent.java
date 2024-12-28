@@ -20,7 +20,6 @@ public class TrackedObjectsEvent implements Event<List<TrackedObject>>// implime
         objects.add(object);
     }
     public List<TrackedObject> getTrackedObjects() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTrackedObjects'");
+        return objects;
     }
 }

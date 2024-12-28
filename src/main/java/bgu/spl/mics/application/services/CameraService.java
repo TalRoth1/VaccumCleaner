@@ -46,7 +46,7 @@ public class CameraService extends MicroService {
                 terminate();
                 return;
             }
-            List<DetectedObject> lst = cam.getObjects(time + cam.getFreq());
+            List<DetectedObject> lst = cam.getObjects(time - cam.getFreq());
             if(lst != null)
             {
                 for(DetectedObject obj : lst)

@@ -31,8 +31,6 @@ public class FusionSlamService extends MicroService {
         this.fusionSlam = fusionSlam;
         this.currentPose = null;
     }
-    
-
     /**
      * Initializes the FusionSlamService.
      * Registers the service to handle TrackedObjectsEvents, PoseEvents, and TickBroadcasts,
@@ -50,7 +48,6 @@ public class FusionSlamService extends MicroService {
         subscribeEvent(PoseEvent.class, event -> {
             this.currentPose = event.getPose();
         });
-
         subscribeBroadcast(TickBroadcast.class, tick -> {
             fusionSlam.updateTick(tick.getTick());
         });

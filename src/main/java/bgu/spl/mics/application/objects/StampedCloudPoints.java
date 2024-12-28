@@ -16,18 +16,14 @@ public class StampedCloudPoints {
         this.id = id;
         this.cloudPoints = cloudPoints;
     }
-
-    
-    public int getTimestamp() {
+    public int getTimestamp()
+    {
         return time;
     }
-
-    
-    public String getObjectId() {
+    public String getObjectId()
+    {
         return id;
     }
-
-
     public List<double[]> getCloudPoints() {
         return cloudPoints;
     }

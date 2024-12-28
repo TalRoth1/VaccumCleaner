@@ -7,10 +7,8 @@ import bgu.spl.mics.application.messages.TrackedObjectsEvent;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
 import bgu.spl.mics.application.objects.TrackedObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import bgu.spl.mics.Callback;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -44,7 +42,7 @@ public class LiDarService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            List<TrackedObject> list = liDar.getObjects(time + liDar.getFreq()); 
+            List<TrackedObject> list = liDar.getObjects(time - liDar.getFreq()); 
             if(list.size() != 0)
             {
                 for(TrackedObject obj : list)
