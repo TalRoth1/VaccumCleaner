@@ -24,20 +24,15 @@ import bgu.spl.mics.MicroService;
 public class LiDarService extends MicroService {
     private final LiDarWorkerTracker liDar;
     private int time;
-    private final List<TrackedObject> trackedObjects;// added since it suppose sending TrackedObjectsEvents to the FusionSLAM service.
-    *   
+
     /**
      * Constructor for LiDarService.
      *
      * @param LiDarWorkerTracker A LiDAR Tracker worker object that this service will use to process data.
      */
     public LiDarService(LiDarWorkerTracker lidar) {
-        liDar = lidar;
-        this.trackedObjects = new ArrayList<>();
         super("LiDarService" + lidar.getId());
-        // TODO Implement this
-        
-
+        this.liDar = lidar;
     }
 
     /**
@@ -49,10 +44,16 @@ public class LiDarService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            if(liDar.getObject().getTime() + liDar.getFreq() == time)
-                TrackedObjectsEvent.addObject(liDar.getObject());
+            List<TrackedObject> list = liDar.getObjects(time + liDar.getFreq()); 
+            if(list.size() != 0)
+            {
+                for(TrackedObject obj : list)
+                {
+                    TrackedObjectsEvent.addObject(obj);
+                }
                 sendEvent(TrackedObjectsEvent.getInstance());
-        }); 
+            }
+        });
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
             this.terminate();
         });
@@ -60,7 +61,7 @@ public class LiDarService extends MicroService {
             this.terminate();
         });
         subscribeEvent(DetectObjectsEvent.class, obj -> {
-            liDar.addObject(obj);
+            liDar.addObject(obj.getObject());
         });
         /*subscribeEvent(DetectObjectsEvent.class, event -> {
             // Process the detected object and add it to the tracked list

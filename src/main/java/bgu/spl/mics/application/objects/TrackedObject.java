@@ -5,21 +5,31 @@ package bgu.spl.mics.application.objects;
  * This object includes information about the tracked object's ID, description, 
  * time of tracking, and coordinates in the environment.
  */
-public class TrackedObject {
+public class TrackedObject
+{
+    private String id;
+    private int time;
+    private String description;
+    private CloudPoint [] coordinates;
 
-    public String getId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getId'");
+    public String getId()
+    {
+        return this.id;
     }
-    // TODO: Define fields and methods.
 
-    public double[] getCoordinates() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCoordinates'");
+    public double[] getCoordinates() 
+    {
+        double [] result = new double[2];
+        result[0] = coordinates[0].getX();
+        result[1] = coordinates[0].getY();
+        return result;
     }
-
-    public String getDescription() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDescription'");
+    public int getTime()
+    {
+        return this.time;
+    }
+    public String getDescription()
+    {
+        return this.description;
     }
 }

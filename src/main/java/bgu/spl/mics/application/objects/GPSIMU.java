@@ -1,19 +1,36 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Represents the robot's GPS and IMU system.
  * Provides information about the robot's position and movement.
  */
 public class GPSIMU {
+    private int currentTick;
+    private STATUS status;
+    private List<Pose> PoseList;
 
-    public String getId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getId'");
+    public GPSIMU(int tick, Pose initPose)
+    {
+        this.currentTick = tick;
+        this.status = STATUS.UP;
+        this.PoseList = new LinkedList<>();
+        this.PoseList.add(initPose);
     }
-    // TODO: Define fields and methods.
-
-    public Object getPose(int time) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPose'");
+    public STATUS getStatus() {
+        return this.status;
+    }
+    public int getTick() {
+        return this.currentTick;
+    }
+    public Pose getPose(int time) {
+        for(Pose pos : this.PoseList)
+        {
+            if(pos.getTime() == time)
+                return pos;
+        }
+        return null;
     }
 }

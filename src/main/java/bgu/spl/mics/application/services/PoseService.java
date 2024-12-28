@@ -19,7 +19,7 @@ public class PoseService extends MicroService {
      */
     public PoseService(GPSIMU gpsimu)
     {
-        super("GPSIMU" + gpsimu.getId());
+        super("GPSIMU");
         this.gpsimu = gpsimu;
     }
 
@@ -31,8 +31,8 @@ public class PoseService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick ->{
             this.time = tick.getTick();
-            Pose currentPose = new gpsimu.getPose(time);
-            sendEvent(new PoseEvent(gpsimu));
+            Pose currentPose = gpsimu.getPose(time);
+            sendEvent(new PoseEvent(currentPose));
         });
     }
 }
