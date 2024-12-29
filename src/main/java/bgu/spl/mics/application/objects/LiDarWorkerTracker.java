@@ -1,7 +1,12 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import bgu.spl.mics.Event;
+import bgu.spl.mics.application.messages.DetectObjectsEvent;
+import bgu.spl.mics.application.messages.TrackedObjectsEvent;
 
 /**
  * LiDarWorkerTracker is responsible for managing a LiDAR worker.
@@ -26,24 +31,47 @@ public class LiDarWorkerTracker
         this.statisticalFolder = statisticalFolder;
         this.liDarDataBase = liDarDataBase;
     }
-    protected void initialize() {
-        subscribeEvent(DetectObjectsEvent.class, event -> {
-            processDetectObjectsEvent(event);
-        });
-    }
+    
     public int getId()
     {
         return this.id;
     }
+    
     public int getFreq()
     {
         return this.frequency;
     }
+    
     public STATUS getsStatus()
     {
         return this.status;
     }
-    public void addObject(DetectedObject obj) // Need to check what they want us to do here
+    public TrackedObjectsEvent processDetectObjectsEvent(DetectObjectsEvent event) {/// FINISH HERE
+        StampedDetectedObjects detectedObj = event.getStampedDetectedObjects();
+        if (detectedObj == null) {
+            return null;
+        }
+        List<TrackedObject> newTrackedObjs = new ArrayList<>();
+
+        for (DetectedObject obj : detectedObj.getObjects()) {
+            List<CloudPoint> cloudPoints = liDarDataBase.getCloudPoints(detectedObj.getTime());
+            if (cloudPoints == null || cloudPoints.isEmpty()) {
+                continue;
+            }
+            TrackedObject tracked = new TrackedObject(obj.getId(),obj.getDesc(),cloudPoints);
+        
+            newTrackedObjs.add(tracked);
+            lastTrackedObjects.add(tracked);
+        }
+
+        if (newTrackedObjs.isEmpty()) {
+            return null;
+        }
+
+        return new TrackedObjectsEvent(newTrackedObjs);
+    }
+    
+    /*public void addObject(DetectedObject obj) // Need to check what they want us to do here /// why we add this method? 
     {
         boolean exists = false;
         for (TrackedObject object : lastTrackedObjects)
@@ -64,33 +92,7 @@ public class LiDarWorkerTracker
         }
         return result;
     }
+
    
-
-    /**
-     * Processes a DetectObjectsEvent by retrieving cloud points from the database
-     * and sending a TrackedObjectsEvent to the FusionSLAM service.
-     *
-     * @param event The DetectObjectsEvent containing detection parameters.
-     */
-    private void processDetectObjectsEvent(DetectObjectsEvent event) {
-        // Retrieve cloud points based on the detection parameters
-        List<CloudPoint> cloudPoints = liDarDataBase.getCloudPoints(event.getDetectionParameters());
-
-        if (cloudPoints == null || cloudPoints.isEmpty()) {
-            return; // No data to process
-        }
-
-        // Create a TrackedObjectsEvent with the retrieved cloud points
-        TrackedObjectsEvent trackedObjectsEvent = new TrackedObjectsEvent(cloudPoints);
-
-        // Send the event to the FusionSLAM service
-        sendEvent(trackedObjectsEvent);
-
-        // Update the StatisticalFolder
-        statisticalFolder.incrementTrackedObjects(cloudPoints.size());
-    }
-    public int getTime() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTime'");
-    }
+    */
 }

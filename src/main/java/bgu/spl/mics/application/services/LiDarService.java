@@ -3,8 +3,13 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.messages.TrackedObjectsEvent;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
 import bgu.spl.mics.application.objects.StatisticalFolder;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import bgu.spl.mics.MicroService;
 
 /**
@@ -17,8 +22,10 @@ import bgu.spl.mics.MicroService;
  */
 public class LiDarService extends MicroService {
     private final LiDarWorkerTracker liDar;
-    private int time;
     private final StatisticalFolder folder;
+    private int currentTime = 0;
+    private final List<DetectObjectsEvent> pendingEvents;
+
 
 
     /**
@@ -30,9 +37,10 @@ public class LiDarService extends MicroService {
         super("LiDarService" + lidar.getId());
         this.liDar = lidar;
         this.folder = folder;
+        this.pendingEvents = new LinkedList<>();
+
         
     }
-
     /**
      * Initializes the LiDarService.
      * Registers the service to handle DetectObjectsEvents and TickBroadcasts,
@@ -41,7 +49,7 @@ public class LiDarService extends MicroService {
     @Override
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            this.time = tick.getTick();
+            this.currentTime = tick.getTick();
         });
         
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
@@ -51,23 +59,38 @@ public class LiDarService extends MicroService {
             this.terminate();
         });
         subscribeEvent(DetectObjectsEvent.class, event -> {
-            handleDetectObjectsEvent(event);
+            // Instead of processing immediately, store it for later
+            pendingEvents.add(event);
         });
-        
-        /*subscribeEvent(DetectObjectsEvent.class, event -> {
-            // Process the detected object and add it to the tracked list
-            TrackedObject trackedObject = liDar.processDetectedObject(event.getObject());
-            if (trackedObject != null) {
-                trackedObjects.add(trackedObject);
-            }
-        });*/
     }
-    private void handleDetectObjectsEvent(DetectObjectsEvent event) {
-        int detectionTime = event.getDetectionTime();
-        if (liDar.getTime() < detectionTime + liDar.getFreq()) {
-            return; // Wait until the correct tick///// suppose do wait here? 
+    private void processPendingEvents() {
+        List<DetectObjectsEvent> toRemove = new LinkedList<>();
+        for (DetectObjectsEvent event : pendingEvents) {
+            int detectionTime = event.getDetectionTime(); 
+            if (currentTime >= detectionTime + liDar.getFreq()) {
+                boolean processedOK = handleDetectObjectsEvent(event);
+                complete(event, processedOK);
+                // Mark event as processed
+                toRemove.add(event);
+            }
+        }
+        // Remove processed events from the pending list
+        pendingEvents.removeAll(toRemove);
+    }
+     private boolean handleDetectObjectsEvent(DetectObjectsEvent event) {
+        TrackedObjectsEvent trackedEvent = liDar.processDetectObjectsEvent(event);
+
+        if (trackedEvent == null) {
+            return false;
         }
 
-      
+        sendEvent(trackedEvent);
+
+        // Update statistics:
+        //   - We increment "tracked objects" count by how many objects or points were found
+        //   - Or if your requirement is to increment by 1 per event, do that here
+        folder.incrementTrackedObjects(trackedEvent.getTrackedObjectsCount());
+
+        return true;
     }
 }
