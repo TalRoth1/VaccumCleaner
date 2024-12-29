@@ -1,70 +1,85 @@
 package bgu.spl.mics.application.objects;
 
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Holds statistical information about the system's operation.
  * This class aggregates metrics such as the runtime of the system,
  * the number of objects detected and tracked, and the number of landmarks identified.
  */
-public class StatisticalFolder
-{ // check using atomicinteger
-    private final AtomicInteger runtime;
-    private final AtomicInteger numDetectedObjects;
-    private final AtomicInteger numTrackedObjects;
-    private final AtomicInteger numLandmarks;
+public class StatisticalFolder {
+    private int runtime;
+    private int numDetectedObjects;
+    private int numTrackedObjects;
+    private int numLandmarks;
 
-   
-    public StatisticalFolder()
-    {
-        this.runtime = new AtomicInteger(0);
-        this.numDetectedObjects = new AtomicInteger(0);
-        this.numTrackedObjects = new AtomicInteger(0);
-        this.numLandmarks = new AtomicInteger(0);
+    /**
+     * Constructor for StatisticalFolder.
+     * Initializes all metrics to zero.
+     */
+    public StatisticalFolder() {
+        this.runtime = 0;
+        this.numDetectedObjects = 0;
+        this.numTrackedObjects = 0;
+        this.numLandmarks = 0;
     }
 
-    public void incrementRuntime(int ticks)
-    {
-        this.runtime.addAndGet(ticks);
+    /**
+     * Increments the runtime by a specified number of ticks.
+     * @param ticks Number of ticks to add.
+     */
+    public synchronized void incrementRuntime(int ticks) {
+        this.runtime += ticks;
     }
 
-   
-    public void incrementDetectedObjects(int count)
-    {
-        this.numDetectedObjects.addAndGet(count);
+    /**
+     * Increments the number of detected objects.
+     * @param count Number of objects to add.
+     */
+    public synchronized void incrementDetectedObjects(int count) {
+        this.numDetectedObjects += count;
     }
 
-   
-    public void incrementTrackedObjects(int count)
-    {
-        this.numTrackedObjects.addAndGet(count);
+    /**
+     * Increments the number of tracked objects.
+     * @param count Number of objects to add.
+     */
+    public synchronized void incrementTrackedObjects(int count) {
+        this.numTrackedObjects += count;
     }
 
-
-    public void incrementLandmarks(int count)
-    {
-        this.numLandmarks.addAndGet(count);
+    /**
+     * Increments the number of landmarks.
+     * @param count Number of landmarks to add.
+     */
+    public synchronized void incrementLandmarks(int count) {
+        this.numLandmarks += count;
     }
 
-
-    public int getRuntime()
-    {
-        return runtime.get();
+    /**
+     * @return The total runtime of the system in ticks.
+     */
+    public synchronized int getRuntime() {
+        return runtime;
     }
 
-    public int getNumDetectedObjects()
-    {
-        return numDetectedObjects.get();
+    /**
+     * @return The total number of detected objects.
+     */
+    public int getNumDetectedObjects() {
+        return numDetectedObjects;
     }
 
-    
-    public int getNumTrackedObjects()
-    {
-        return numTrackedObjects.get();
+    /**
+     * @return The total number of tracked objects.
+     */
+    public int getNumTrackedObjects() {
+        return numTrackedObjects;
     }
 
-    public int getNumLandmarks()
-    {
-        return numLandmarks.get();
+    /**
+     * @return The total number of landmarks.
+     */
+    public int getNumLandmarks() {
+        return numLandmarks;
     }
 }

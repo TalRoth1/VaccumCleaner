@@ -3,12 +3,8 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
-import bgu.spl.mics.application.messages.TrackedObjectsEvent;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
-import bgu.spl.mics.application.objects.TrackedObject;
-
-import java.util.List;
-
+import bgu.spl.mics.application.objects.StatisticalFolder;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -22,15 +18,19 @@ import bgu.spl.mics.MicroService;
 public class LiDarService extends MicroService {
     private final LiDarWorkerTracker liDar;
     private int time;
+    private final StatisticalFolder folder;
+
 
     /**
      * Constructor for LiDarService.
      *
      * @param LiDarWorkerTracker A LiDAR Tracker worker object that this service will use to process data.
      */
-    public LiDarService(LiDarWorkerTracker lidar) {
+    public LiDarService(LiDarWorkerTracker lidar, StatisticalFolder folder) {
         super("LiDarService" + lidar.getId());
         this.liDar = lidar;
+        this.folder = folder;
+        
     }
 
     /**
@@ -42,25 +42,18 @@ public class LiDarService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            List<TrackedObject> list = liDar.getObjects(time - liDar.getFreq()); 
-            if(list.size() != 0)
-            {
-                for(TrackedObject obj : list)
-                {
-                    TrackedObjectsEvent.addObject(obj);
-                }
-                sendEvent(TrackedObjectsEvent.getInstance());
-            }
         });
+        
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
             this.terminate();
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();
         });
-        subscribeEvent(DetectObjectsEvent.class, obj -> {
-            liDar.addObject(obj.getObject());
+        subscribeEvent(DetectObjectsEvent.class, event -> {
+            handleDetectObjectsEvent(event);
         });
+        
         /*subscribeEvent(DetectObjectsEvent.class, event -> {
             // Process the detected object and add it to the tracked list
             TrackedObject trackedObject = liDar.processDetectedObject(event.getObject());
@@ -68,5 +61,13 @@ public class LiDarService extends MicroService {
                 trackedObjects.add(trackedObject);
             }
         });*/
+    }
+    private void handleDetectObjectsEvent(DetectObjectsEvent event) {
+        int detectionTime = event.getDetectionTime();
+        if (liDar.getTime() < detectionTime + liDar.getFreq()) {
+            return; // Wait until the correct tick///// suppose do wait here? 
+        }
+
+      
     }
 }

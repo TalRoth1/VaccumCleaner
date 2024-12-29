@@ -24,27 +24,47 @@ public class FusionSlam
     }
     private final Map<String, LandMark> landmarks;
     private int currentTick;
-
+    private final List<Pose> poses;
+    
     private FusionSlam() {
         this.landmarks = new HashMap<>();
         this.currentTick = 0;
+        this.poses = new ArrayList<>();
+        
+
+
     }
-    public void updateLandmark(TrackedObject trackedObject, Pose pose) {
-        if (pose == null || trackedObject == null) {
+    public void updateLandmark(String id,String description,List<CloudPoint> cord) {
+        if (cord == null || id == null) {
             return;
         }
-        String id = trackedObject.getId();
-        CloudPoint [] transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
-
-        if (landmarks.containsKey(id)) {
-            // Update existing landmark
-            LandMark landmark = landmarks.get(id);
-            landmark.updateCoordinates(transformedCoordinates);
+        LandMark land = landmarks.get(id);
+        if (land == null) {
+            landmarks.put(id, new LandMark(id, description, cord));
         } else {
-            // Add new landmark
-            landmarks.put(id, new LandMark(id, trackedObject.getDescription(), transformedCoordinates));
+            land.setCoordinates(updatePoints(land,cord));
         }
     }
+    
+    public List<CloudPoint> updatePoints(LandMark land, List<CloudPoint> newPoints) {
+        List<CloudPoint> existingPoints = land.getCoordinates();
+        int minSize = Math.min(existingPoints.size(), newPoints.size());
+        for (int i = 0; i < minSize; i++) {
+            CloudPoint existingPoint = existingPoints.get(i);
+            CloudPoint newPoint = newPoints.get(i);
+    
+            double averageX = (existingPoint.getX() + newPoint.getX()) / 2;
+            double averageY = (existingPoint.getY() + newPoint.getY()) / 2;
+            existingPoints.set(i, new CloudPoint(averageX, averageY));
+        }
+    
+        // If there are extra points in newPoints, add them to the existingPoints list
+        if (newPoints.size() > existingPoints.size()) {
+            existingPoints.addAll(newPoints.subList(existingPoints.size(), newPoints.size()));
+        }
+        return existingPoints; 
+    }
+    
 
     /**
      * Updates the current simulation tick.
@@ -62,25 +82,16 @@ public class FusionSlam
      * @param pose        The robot's current pose.
      * @return Transformed coordinates in the global frame.
      */
-    private CloudPoint [] transformCoordinates(CloudPoint [] coordinates, Pose pose) 
-    {
-        CloudPoint [] result = new CloudPoint[coordinates.length];
-        for(int i = 0; i<coordinates.length; i++)
-        {
-            double x = coordinates[i].getX();
-            double y = coordinates[i].getY();
-            double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
-            double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
-            result[i] = new CloudPoint(transformedX, transformedY);
-        }
-        return result;
-    }
     /**
      * @return The list of all landmarks.
      */
     public List<LandMark> getLandmarks()
     {
         return new ArrayList<>(landmarks.values());
+    }
+
+    public void addPose(Pose pose) {
+        poses.add(pose);
     }
 
     /**

@@ -14,13 +14,22 @@ public class LiDarWorkerTracker
     private int frequency;
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
+    private final StatisticalFolder statisticalFolder;
+    private final LiDarDataBase liDarDataBase;
 
-    public LiDarWorkerTracker(int id, int freq, List<TrackedObject> trackedObjects)
+    public LiDarWorkerTracker(int id, int freq, List<TrackedObject> trackedObjects, StatisticalFolder statisticalFolder, LiDarDataBase liDarDataBase)
     {
         this.id = id;
         this.frequency = freq;
         this.status = STATUS.UP;
         this.lastTrackedObjects = trackedObjects;
+        this.statisticalFolder = statisticalFolder;
+        this.liDarDataBase = liDarDataBase;
+    }
+    protected void initialize() {
+        subscribeEvent(DetectObjectsEvent.class, event -> {
+            processDetectObjectsEvent(event);
+        });
     }
     public int getId()
     {
@@ -54,5 +63,34 @@ public class LiDarWorkerTracker
                 result.add(obj);
         }
         return result;
+    }
+   
+
+    /**
+     * Processes a DetectObjectsEvent by retrieving cloud points from the database
+     * and sending a TrackedObjectsEvent to the FusionSLAM service.
+     *
+     * @param event The DetectObjectsEvent containing detection parameters.
+     */
+    private void processDetectObjectsEvent(DetectObjectsEvent event) {
+        // Retrieve cloud points based on the detection parameters
+        List<CloudPoint> cloudPoints = liDarDataBase.getCloudPoints(event.getDetectionParameters());
+
+        if (cloudPoints == null || cloudPoints.isEmpty()) {
+            return; // No data to process
+        }
+
+        // Create a TrackedObjectsEvent with the retrieved cloud points
+        TrackedObjectsEvent trackedObjectsEvent = new TrackedObjectsEvent(cloudPoints);
+
+        // Send the event to the FusionSLAM service
+        sendEvent(trackedObjectsEvent);
+
+        // Update the StatisticalFolder
+        statisticalFolder.incrementTrackedObjects(cloudPoints.size());
+    }
+    public int getTime() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getTime'");
     }
 }

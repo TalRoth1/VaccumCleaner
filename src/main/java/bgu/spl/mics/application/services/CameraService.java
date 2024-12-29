@@ -6,6 +6,7 @@ import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.STATUS;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
 
 import java.util.List;
 import bgu.spl.mics.MicroService;
@@ -17,7 +18,7 @@ import bgu.spl.mics.MicroService;
  * This service interacts with the Camera object to detect objects and updates
  * the system's StatisticalFolder upon sending its observations.
  */
-public class CameraService extends MicroService {
+public class CameraService extends MicroService { //// updates
     private final Camera cam;
     private int time;
     /**
@@ -41,7 +42,7 @@ public class CameraService extends MicroService {
     {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            if (cam.getStat() != STATUS.UP)
+            if (cam.getStat() != STATUS.UP)////// do in lidar to
             {
                 terminate();
                 return;
@@ -49,10 +50,9 @@ public class CameraService extends MicroService {
             List<DetectedObject> lst = cam.getObjects(time - cam.getFreq());
             if(lst != null)
             {
-                for(DetectedObject obj : lst)
-                {
-                    sendEvent(new DetectObjectsEvent(obj));
-                }
+                StampedDetectedObjects detectedObjects = new StampedDetectedObjects(time);
+                DetectObjectsEvent event = new DetectObjectsEvent(detectedObjects, time);
+                sendEvent(event);
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
