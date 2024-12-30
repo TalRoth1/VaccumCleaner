@@ -59,14 +59,7 @@ public class LiDarService extends MicroService {
             this.terminate();
         });
         subscribeEvent(DetectObjectsEvent.class, obj -> {
-            liDar.addObject(obj.getObject());
+            liDar.addObject(obj.getObject(), time);
         });
-        /*subscribeEvent(DetectObjectsEvent.class, event -> {
-            // Process the detected object and add it to the tracked list
-            TrackedObject trackedObject = liDar.processDetectedObject(event.getObject());
-            if (trackedObject != null) {
-                trackedObjects.add(trackedObject);
-            }
-        });*/
     }
 }

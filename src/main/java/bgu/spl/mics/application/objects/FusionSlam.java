@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class FusionSlam
             return;
         }
         String id = trackedObject.getId();
-        CloudPoint [] transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
+        List<CloudPoint> transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
 
         if (landmarks.containsKey(id)) {
             // Update existing landmark
@@ -62,16 +63,16 @@ public class FusionSlam
      * @param pose        The robot's current pose.
      * @return Transformed coordinates in the global frame.
      */
-    private CloudPoint [] transformCoordinates(CloudPoint [] coordinates, Pose pose) 
+    private List<CloudPoint> transformCoordinates(List<CloudPoint> coordinates, Pose pose) 
     {
-        CloudPoint [] result = new CloudPoint[coordinates.length];
-        for(int i = 0; i<coordinates.length; i++)
+        List<CloudPoint> result = new LinkedList<CloudPoint>();
+        for(CloudPoint coords : coordinates)
         {
-            double x = coordinates[i].getX();
-            double y = coordinates[i].getY();
+            double x = coords.getX();
+            double y = coords.getY();
             double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
             double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
-            result[i] = new CloudPoint(transformedX, transformedY);
+            result.add(new CloudPoint(transformedX, transformedY));
         }
         return result;
     }

@@ -15,12 +15,11 @@ public class LiDarWorkerTracker
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
 
-    public LiDarWorkerTracker(int id, int freq, List<TrackedObject> trackedObjects)
+    public LiDarWorkerTracker(int id, int freq)
     {
         this.id = id;
         this.frequency = freq;
         this.status = STATUS.UP;
-        this.lastTrackedObjects = trackedObjects;
     }
     public int getId()
     {
@@ -34,16 +33,10 @@ public class LiDarWorkerTracker
     {
         return this.status;
     }
-    public void addObject(DetectedObject obj) // Need to check what they want us to do here
+    public void addObject(DetectedObject obj, int time)
     {
-        boolean exists = false;
-        for (TrackedObject object : lastTrackedObjects)
-        {
-            if(object.getId().equals(obj.getId()))
-                exists = true;
-        }
-        if(!exists)
-            System.out.print("Adding a nonexistant object");
+        List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId());
+        this.lastTrackedObjects.add(new TrackedObject(obj.getId(), time, obj.getId(), coords));
     }
     public List<TrackedObject> getObjects(int time)
     {
