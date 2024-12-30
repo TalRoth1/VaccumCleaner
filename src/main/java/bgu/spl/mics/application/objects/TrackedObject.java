@@ -12,14 +12,16 @@ public class TrackedObject
     private String id;
     private int time;
     private String description;
-    private List<CloudPoint> coordinates;
+    private List<CloudPoint>  coordinates;
 
-    public TrackedObject(String id, String description, List<CloudPoint> cloudPoints) {
+
+    public TrackedObject(String id, int time, String description, List<CloudPoint> coordinates)
+    {
         this.id = id;
+        this.time = time;
         this.description = description;
-        this.coordinates = cloudPoints;
+        this.coordinates = coordinates;
     }
-    
     public String getId()
     {
         return this.id;

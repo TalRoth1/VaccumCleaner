@@ -4,10 +4,11 @@ import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrackedObjectsEvent;
+import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
-import bgu.spl.mics.application.objects.StatisticalFolder;
+import bgu.spl.mics.application.objects.STATUS;
+import bgu.spl.mics.application.objects.TrackedObject;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import bgu.spl.mics.MicroService;
@@ -22,25 +23,18 @@ import bgu.spl.mics.MicroService;
  */
 public class LiDarService extends MicroService {
     private final LiDarWorkerTracker liDar;
-    private final StatisticalFolder folder;
-    private int currentTime = 0;
-    private final List<DetectObjectsEvent> pendingEvents;
-
-
+    private int time;
 
     /**
      * Constructor for LiDarService.
      *
      * @param LiDarWorkerTracker A LiDAR Tracker worker object that this service will use to process data.
      */
-    public LiDarService(LiDarWorkerTracker lidar, StatisticalFolder folder) {
+    public LiDarService(LiDarWorkerTracker lidar) {
         super("LiDarService" + lidar.getId());
         this.liDar = lidar;
-        this.folder = folder;
-        this.pendingEvents = new LinkedList<>();
-
-        
     }
+
     /**
      * Initializes the LiDarService.
      * Registers the service to handle DetectObjectsEvents and TickBroadcasts,
@@ -49,48 +43,35 @@ public class LiDarService extends MicroService {
     @Override
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            this.currentTime = tick.getTick();
+            this.time = tick.getTick();
+            if(liDar.getsStatus() != STATUS.UP)
+            {
+                terminate();
+                return;
+            }
+            int stampedTime = time - liDar.getFreq();
+            List<TrackedObject> list = liDar.getObjects(stampedTime); 
+            if(list.size() != 0)
+            {
+                for(TrackedObject obj : list)
+                {
+                    TrackedObjectsEvent.addObject(obj);
+                }
+                sendEvent(TrackedObjectsEvent.getInstance());
+            }
         });
-        
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
             this.terminate();
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();
         });
-        subscribeEvent(DetectObjectsEvent.class, event -> {
-            // Instead of processing immediately, store it for later
-            pendingEvents.add(event);
-        });
-    }
-    private void processPendingEvents() {
-        List<DetectObjectsEvent> toRemove = new LinkedList<>();
-        for (DetectObjectsEvent event : pendingEvents) {
-            int detectionTime = event.getDetectionTime(); 
-            if (currentTime >= detectionTime + liDar.getFreq()) {
-                boolean processedOK = handleDetectObjectsEvent(event);
-                complete(event, processedOK);
-                // Mark event as processed
-                toRemove.add(event);
+        subscribeEvent(DetectObjectsEvent.class, obj -> {
+            for(DetectedObject obje : obj.getObjects())
+            {
+                liDar.addObject(obje, time);
             }
-        }
-        // Remove processed events from the pending list
-        pendingEvents.removeAll(toRemove);
-    }
-     private boolean handleDetectObjectsEvent(DetectObjectsEvent event) {
-        TrackedObjectsEvent trackedEvent = liDar.processDetectObjectsEvent(event);
-
-        if (trackedEvent == null) {
-            return false;
-        }
-
-        sendEvent(trackedEvent);
-
-        // Update statistics:
-        //   - We increment "tracked objects" count by how many objects or points were found
-        //   - Or if your requirement is to increment by 1 per event, do that here
-        folder.incrementTrackedObjects(trackedEvent.getTrackedObjectsCount());
-
-        return true;
+            complete(obj, true);
+        });
     }
 }

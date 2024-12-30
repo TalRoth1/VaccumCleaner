@@ -47,10 +47,15 @@ public class CameraService extends MicroService { //// updates
                 terminate();
                 return;
             }
-            List<DetectedObject> lst = cam.getObjects(time - cam.getFreq());
+            int stampedTime = time - cam.getFreq();
+            if(stampedTime < 0)
+            {
+                return;
+            }
+            List<DetectedObject> lst = cam.getObjects(stampedTime);
             if(lst != null)
             {
-                StampedDetectedObjects detectedObjects = new StampedDetectedObjects(time);
+                StampedDetectedObjects detectedObjects = new StampedDetectedObjects(stampedTime);
                 DetectObjectsEvent event = new DetectObjectsEvent(detectedObjects, time);
                 sendEvent(event);
             }

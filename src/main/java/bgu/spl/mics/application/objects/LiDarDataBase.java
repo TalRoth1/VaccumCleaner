@@ -1,50 +1,48 @@
 package bgu.spl.mics.application.objects;
 
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * LiDarDataBase is a singleton class responsible for managing LiDAR data.
  * It provides access to cloud point data and other relevant information for tracked objects.
  */
-public class LiDarDataBase { //// update to time not id
+public class LiDarDataBase 
+{
     private static class SingeltonHolder
 	{
 		private static LiDarDataBase instance = new LiDarDataBase();
 	}
-    private final Map<Integer, List<CloudPoint>> objectCloudPoints; 
     private LiDarDataBase()
     {
-        this.objectCloudPoints = new HashMap<>();
+        this.cloudPoints = new LinkedList<StampedCloudPoints>();
     }
-
+    private List<StampedCloudPoints> cloudPoints;
     /**
      * Returns the singleton instance of LiDarDataBase.
      *
      * @param filePath The path to the LiDAR data file.
      * @return The singleton instance of LiDarDataBase.
      */
-    public static LiDarDataBase getInstance(String filePath) {
-        return  SingeltonHolder.instance;
+    public static LiDarDataBase getInstance(String filePath) // What is the filePath for?
+    {
+        if (filePath != "")
+        {
+            
+        }
+        return SingeltonHolder.instance;
     }
-    
-    public synchronized void addCloudPoints(int time, List<CloudPoint> cloudPoints) {
-        objectCloudPoints.put(time, cloudPoints);
-    }
-
-    /**
-     * Retrieves cloud points for a specific object.
-     *
-     * @param objectId The unique identifier of the object.
-     * @return The list of cloud points associated with the object, or null if no data exists.
-     */
-    /*public synchronized List<CloudPoint> getCloudPoints(String objectId) {
-        return objectCloudPoints.get(objectId);
-    }what is this ??*/
-
-
-    public synchronized List<CloudPoint> getCloudPoints(int time) {
-        return objectCloudPoints.get(time);
+    public static List<CloudPoint> getDistance(String id)
+    {
+        List<CloudPoint> result = new LinkedList<CloudPoint>();
+        for(StampedCloudPoints points : getInstance("").cloudPoints)
+        {
+            if (points.getObjectId() == id)
+            {
+                result.addAll(points.getCloudPoints());
+            }
+        }
+        return result;
     }
 }

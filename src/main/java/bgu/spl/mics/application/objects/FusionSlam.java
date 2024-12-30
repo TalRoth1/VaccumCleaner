@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,58 +14,38 @@ import java.util.Map;
 public class FusionSlam 
 {
         // Singleton instance holder
-        private static class FusionSlamHolder
-        {
-            private static FusionSlam instance = new FusionSlam();
-        }
-        
-
-    public static FusionSlam getInstance() {
+    private static class FusionSlamHolder
+    {
+        private static FusionSlam instance = new FusionSlam();
+    }
+    public static FusionSlam getInstance()
+    {
         return FusionSlamHolder.instance;
     }
     private final Map<String, LandMark> landmarks;
     private int currentTick;
-    private final List<Pose> poses;
-    
-    private FusionSlam() {
+
+    private FusionSlam() 
+    {
         this.landmarks = new HashMap<>();
         this.currentTick = 0;
-        this.poses = new ArrayList<>();
-        
-
-
     }
-    public void updateLandmark(String id,String description,List<CloudPoint> cord) {
-        if (cord == null || id == null) {
+    public void updateLandmark(TrackedObject trackedObject, Pose pose) {
+        if (pose == null || trackedObject == null) {
             return;
         }
-        LandMark land = landmarks.get(id);
-        if (land == null) {
-            landmarks.put(id, new LandMark(id, description, cord));
+        String id = trackedObject.getId();
+        List<CloudPoint> transformedCoordinates = transformCoordinates(trackedObject.getCoordinates(), pose);
+
+        if (landmarks.containsKey(id)) {
+            // Update existing landmark
+            LandMark landmark = landmarks.get(id);
+            landmark.updateCoordinates(transformedCoordinates);
         } else {
-            land.setCoordinates(updatePoints(land,cord));
+            // Add new landmark
+            landmarks.put(id, new LandMark(id, trackedObject.getDescription(), transformedCoordinates));
         }
     }
-    
-    public List<CloudPoint> updatePoints(LandMark land, List<CloudPoint> newPoints) {
-        List<CloudPoint> existingPoints = land.getCoordinates();
-        int minSize = Math.min(existingPoints.size(), newPoints.size());
-        for (int i = 0; i < minSize; i++) {
-            CloudPoint existingPoint = existingPoints.get(i);
-            CloudPoint newPoint = newPoints.get(i);
-    
-            double averageX = (existingPoint.getX() + newPoint.getX()) / 2;
-            double averageY = (existingPoint.getY() + newPoint.getY()) / 2;
-            existingPoints.set(i, new CloudPoint(averageX, averageY));
-        }
-    
-        // If there are extra points in newPoints, add them to the existingPoints list
-        if (newPoints.size() > existingPoints.size()) {
-            existingPoints.addAll(newPoints.subList(existingPoints.size(), newPoints.size()));
-        }
-        return existingPoints; 
-    }
-    
 
     /**
      * Updates the current simulation tick.
@@ -82,16 +63,25 @@ public class FusionSlam
      * @param pose        The robot's current pose.
      * @return Transformed coordinates in the global frame.
      */
+    private List<CloudPoint> transformCoordinates(List<CloudPoint> coordinates, Pose pose) 
+    {
+        List<CloudPoint> result = new LinkedList<CloudPoint>();
+        for(CloudPoint coords : coordinates)
+        {
+            double x = coords.getX();
+            double y = coords.getY();
+            double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
+            double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
+            result.add(new CloudPoint(transformedX, transformedY));
+        }
+        return result;
+    }
     /**
      * @return The list of all landmarks.
      */
     public List<LandMark> getLandmarks()
     {
         return new ArrayList<>(landmarks.values());
-    }
-
-    public void addPose(Pose pose) {
-        poses.add(pose);
     }
 
     /**

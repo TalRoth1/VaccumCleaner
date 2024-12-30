@@ -12,11 +12,10 @@ public class Camera {
     private STATUS stat; 
     private List<StampedDetectedObjects> stamp;
 
-    public Camera(int id, int frequancy, List<StampedDetectedObjects> data)
+    public Camera(int id, int frequancy)
     {
         this.id = id;
         this.frequancy = frequancy;
-        this.stamp = data;
         this.stat = STATUS.UP;
     }
     public int getId()
@@ -40,5 +39,20 @@ public class Camera {
                 result = obj.getObjects();
         }
         return result;
+    }
+    public void addObject(DetectedObject obj, int time)
+    {
+        StampedDetectedObjects object = new StampedDetectedObjects(time);
+        object.addObject(obj);
+        stamp.add(object);
+    }
+    public void addObjects(List<DetectedObject> obj, int time)
+    {
+        StampedDetectedObjects object = new StampedDetectedObjects(time);
+        for(DetectedObject obje : obj)
+        {
+            object.addObject(obje);
+        }
+        stamp.add(object);
     }
 }
