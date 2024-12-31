@@ -8,6 +8,10 @@ import java.util.List;
  * Provides information about the robot's position and movement.
  */
 public class GPSIMU {
+    private static class SingeltonHolder
+	{
+		private static GPSIMU instance = new GPSIMU(0 , new Pose(0, 0, 0, 0));
+	}
     private int currentTick;
     private STATUS status;
     private List<Pose> PoseList;
@@ -18,6 +22,10 @@ public class GPSIMU {
         this.status = STATUS.UP;
         this.PoseList = new LinkedList<>();
         this.PoseList.add(initPose);
+    }
+    public static GPSIMU getInstance()
+    {
+        return SingeltonHolder.instance;
     }
     public STATUS getStatus() {
         return this.status;
