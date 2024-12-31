@@ -37,6 +37,7 @@ public class GurionRockRunner {
     {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         List<Camera> cameras = new ArrayList<>();
+        @SuppressWarnings("unused")
         List<LiDarWorkerTracker> lidarWorkers = new ArrayList<>();
         
         // add - to the StatisticalFolder - every camera and lidar need fet stats in the constructos
@@ -67,9 +68,6 @@ public class GurionRockRunner {
         }
         */
 
-
-
-
         try
         {
             Type type = new TypeToken<Map<String, List<List<StampedDetectedObjects>>>>() {}.getType();
@@ -97,14 +95,6 @@ public class GurionRockRunner {
         }
     }
     
-
-
-
-
-
-
-
-
 
     // Classes to represent JSON structure
     static class CameraConfiguration {
