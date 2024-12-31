@@ -9,13 +9,14 @@ import java.util.List;
  */
 public class StampedDetectedObjects {
     private int time;
-    private List<DetectedObject> DetectedObjects; //Rotem needs to check if this is ok
+    private List<DetectedObject> DetectedObjects; 
 
     public StampedDetectedObjects(int time)
     {
         this.time = time;
         this.DetectedObjects = new LinkedList<DetectedObject>();
     }
+
     public int getTime()
     {
         return this.time;
@@ -27,5 +28,8 @@ public class StampedDetectedObjects {
     public void addObject(DetectedObject obj)
     {
         this.DetectedObjects.add(obj);
+    }
+    public void addObjects(List<DetectedObject> objs) {
+        this.DetectedObjects.addAll(objs);
     }
 }

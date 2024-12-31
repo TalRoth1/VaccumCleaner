@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
@@ -55,13 +56,12 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> void complete(Event<T> e, T result)
 	{
-		Future<T> future = null;
-		if(futures.containsKey(e))
-			future = (Future<T>)futures.get(e);
-		if(future != null)
-			future.resolve(result);
-		future = (Future<T>) futures.remove(e);
-	
+		Future<T> future = (Future<T>) futures.get(e);
+        if (future != null) {
+            future.resolve(result);
+            futures.remove(e);
+        }
+
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class MessageBusImpl implements MessageBus {
 	public <T> Future<T> sendEvent(Event<T> e) /// chancge sync
 	{
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
-		if(ms == null || ms.isEmpty())
+		if(ms == null|| ms.isEmpty())// check if need return null if its empty 
 			return null;	
 		synchronized (ms) {	
 			MicroService head = ms.poll();
@@ -104,8 +104,8 @@ public class MessageBusImpl implements MessageBus {
 			return;
 		if(!queues.containsKey(m))
 			queues.put(m, new LinkedBlockingQueue<Message>());
-		Bsubscribers.get(TerminatedBroadcast.class).add(m);
-	}
+			Bsubscribers.computeIfAbsent(TerminatedBroadcast.class, k -> new ConcurrentLinkedQueue<>()).offer(m);	
+		}
 
 	@Override
 	public void unregister(MicroService m) 

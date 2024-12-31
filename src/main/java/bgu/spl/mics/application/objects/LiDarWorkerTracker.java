@@ -1,5 +1,7 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,12 +16,20 @@ public class LiDarWorkerTracker
     private int frequency;
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
+    private final StatisticalFolder stats;
+    private List<TrackedObject> lastFrame;
 
-    public LiDarWorkerTracker(int id, int freq)
+
+
+    public LiDarWorkerTracker(int id, int freq, StatisticalFolder stats)
     {
         this.id = id;
         this.frequency = freq;
         this.status = STATUS.UP;
+        this.stats = stats;
+        this.lastTrackedObjects = new ArrayList<>();
+        this.lastFrame = new ArrayList<>();
+
     }
     public int getId()
     {
@@ -29,23 +39,52 @@ public class LiDarWorkerTracker
     {
         return this.frequency;
     }
+    public List<TrackedObject> getLastFrame() {
+        return new ArrayList<>(lastFrame);
+    }
     public STATUS getsStatus()
     {
         return this.status;
     }
+    public void setStatus(STATUS newStatus) {
+        this.status = newStatus;
+    }
     public void addObject(DetectedObject obj, int time)
     {
+        if ("ERROR".equals(obj.getId())) {
+            // We found an error => set status=ERROR
+            this.status = STATUS.ERROR;
+            return;
+        }
         List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId());
-        this.lastTrackedObjects.add(new TrackedObject(obj.getId(), time, obj.getDesc(), coords));
+         if (coords == null) {
+            coords = new ArrayList<>();
+        }
+        TrackedObject tObj = new TrackedObject(obj.getId(), time, obj.getDesc(), coords);
+        this.lastTrackedObjects.add(tObj);
+        stats.incrementTrackedObjects(1);
+        lastFrame.clear();
+        lastFrame.add(tObj);
+
     }
+
     public List<TrackedObject> getObjects(int time)
     {
         List<TrackedObject> result = new LinkedList<TrackedObject>();
-        for(TrackedObject obj : lastTrackedObjects)
-        {
-            if(obj.getTime() == time)
+        Iterator<TrackedObject> it = lastTrackedObjects.iterator();
+
+        while (it.hasNext()) {
+            TrackedObject obj = it.next();
+            if (obj.getTime() + frequency <= time) {
                 result.add(obj);
+                it.remove();
+            }
+        }
+        if (!result.isEmpty()) {
+            lastFrame = new ArrayList<>(result);
         }
         return result;
+    
     }
+    // case of no more object 
 }

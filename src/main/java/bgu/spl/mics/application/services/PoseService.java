@@ -3,8 +3,10 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.PoseEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.Pose;
+import bgu.spl.mics.application.objects.STATUS;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -33,8 +35,20 @@ public class PoseService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, tick ->{
             this.time = tick.getTick();
+            if (gpsimu.getStatus() == STATUS.ERROR) {
+                sendBroadcast(new CrashedBroadcast("GPSIMU"));
+                terminate();
+                return;
+            }
+            if (gpsimu.getStatus() == STATUS.DOWN) {
+                FusionSlam.getInstance().serviceTerminated(getName());
+                terminate();
+                return;
+            }
             Pose currentPose = gpsimu.getPose(time);
-            sendEvent(new PoseEvent(currentPose, time));
+            if (currentPose != null) {
+                sendEvent(new PoseEvent(currentPose, time));
+            }
         });
         subscribeBroadcast(CrashedBroadcast.class, crash -> {
             terminate();

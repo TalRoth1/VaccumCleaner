@@ -5,6 +5,7 @@ import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
+import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.STATUS;
 import bgu.spl.mics.application.objects.StampedDetectedObjects;
 
@@ -42,29 +43,42 @@ public class CameraService extends MicroService { //// updates
     {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             this.time = tick.getTick();
-            if (cam.getStat() != STATUS.UP)////// do in lidar to
-            {
+            if (cam.getStat() == STATUS.ERROR) {
+                // Broadcast a crash
+                String sensorName = "Camera" + cam.getId();
+                sendBroadcast(new CrashedBroadcast(sensorName));
                 terminate();
                 return;
             }
+            if (cam.getStat() == STATUS.DOWN) {
+                // No more data => normal termination
+                FusionSlam.getInstance().serviceTerminated(getName());
+                terminate();
+                return;
+            }
+
             int stampedTime = time - cam.getFreq();
             if(stampedTime < 0)
             {
                 return;
             }
             List<DetectedObject> lst = cam.getObjects(stampedTime);
-            if(lst != null)
+            if(lst != null  && !lst.isEmpty())
             {
                 StampedDetectedObjects detectedObjects = new StampedDetectedObjects(stampedTime);
+                detectedObjects.addObjects(lst);
                 DetectObjectsEvent event = new DetectObjectsEvent(detectedObjects, time);
-                sendEvent(event);
+                sendEvent(event);    
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
+            FusionSlam.getInstance().serviceTerminated(getName());
+            terminate();
             this.terminate();
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();
         });
+        
     }
 }

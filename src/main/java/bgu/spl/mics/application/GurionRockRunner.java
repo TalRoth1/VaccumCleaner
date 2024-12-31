@@ -12,8 +12,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import bgu.spl.mics.application.objects.Camera;
+import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
 import bgu.spl.mics.application.objects.StampedDetectedObjects;
+import bgu.spl.mics.application.objects.StatisticalFolder;
 
 /**
  * The main entry point for the GurionRock Pro Max Ultra Over 9000 simulation.
@@ -36,8 +38,15 @@ public class GurionRockRunner {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         List<Camera> cameras = new ArrayList<>();
         List<LiDarWorkerTracker> lidarWorkers = new ArrayList<>();
+        
+        // add - to the StatisticalFolder - every camera and lidar need fet stats in the constructos
+        StatisticalFolder stats = new StatisticalFolder();
+        FusionSlam slam = FusionSlam.getInstance();
+        int total=0;// need to be update for  number of cameras+ lidars+ gps and imu 
+        slam.setStatisticalFolder(stats);
+        slam.setTotalMicroservices(total); 
 
-        try (FileReader reader = new FileReader(args[0]))
+        /*try (FileReader reader = new FileReader(args[0]))
         {
             // Parse JSON into Config class
             Config config = gson.fromJson(reader, Config.class);
@@ -56,6 +65,7 @@ public class GurionRockRunner {
         {
             e.printStackTrace();
         }
+        */
 
 
 
@@ -86,6 +96,7 @@ public class GurionRockRunner {
             e.printStackTrace();
         }
     }
+    
 
 
 

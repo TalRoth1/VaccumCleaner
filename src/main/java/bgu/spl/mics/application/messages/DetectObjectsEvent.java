@@ -6,7 +6,7 @@ import bgu.spl.mics.Event;
 import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.StampedDetectedObjects;
 
-public class DetectObjectsEvent implements Event<DetectedObject> /// update
+public class DetectObjectsEvent implements Event<Boolean> /// update
 {
     private final StampedDetectedObjects stampedDetectedObjects;
     private final int detectionTime;
