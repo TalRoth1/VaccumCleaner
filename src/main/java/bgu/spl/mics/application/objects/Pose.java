@@ -18,6 +18,7 @@ public class Pose
         this.yaw = yaw;
         this.time = time;
     }
+    
     public double getYaw() 
     {
         return this.yaw;

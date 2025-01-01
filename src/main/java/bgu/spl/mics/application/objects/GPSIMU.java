@@ -16,7 +16,7 @@ public class GPSIMU {
     private STATUS status;
     private List<Pose> PoseList;
 
-    public GPSIMU(int tick, Pose initPose)
+    private GPSIMU(int tick, Pose initPose)
     {
         this.currentTick = tick;
         this.status = STATUS.UP;
