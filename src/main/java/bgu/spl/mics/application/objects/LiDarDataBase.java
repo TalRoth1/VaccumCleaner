@@ -33,12 +33,12 @@ public class LiDarDataBase
      */
     public static LiDarDataBase getInstance(String filePath)
     {
-        if (!filePath.isEmpty()) {
-            try {
-                // Read and parse JSON
+        if (!filePath.isEmpty()) 
+        {
+            try 
+            {
                 Gson gson = new Gson();
                 JsonArray jsonArray = gson.fromJson(new FileReader(filePath), JsonArray.class);
-
                 // Parse each object and add to cloudPoints
                 for (JsonElement element : jsonArray) {
                     JsonObject jsonObject = element.getAsJsonObject();
@@ -58,8 +58,8 @@ public class LiDarDataBase
                     StampedCloudPoints stampedCloudPoints = new StampedCloudPoints(time, id, points);
                     SingeltonHolder.instance.cloudPoints.add(stampedCloudPoints);
                 }
-
-            } catch (Exception e) {
+            } 
+            catch (Exception e) {
                 e.printStackTrace();
             }
         }

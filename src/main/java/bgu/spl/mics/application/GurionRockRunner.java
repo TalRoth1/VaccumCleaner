@@ -3,6 +3,7 @@ package bgu.spl.mics.application;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputFilter.Config;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,9 +12,13 @@ import java.lang.reflect.Type;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import bgu.spl.mics.application.objects.Camera;
+import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.LandMark;
 import bgu.spl.mics.application.objects.LiDarDataBase;
@@ -40,12 +45,12 @@ public class GurionRockRunner {
      */
     public static void main(String[] args) //gets one arg, the path to config file 
     {
-        String configPath = args[0];
-        String [] arg = configPath.split("/");
+        String configPath = "D:\\Projects\\SPL\\Vaccum Cleaner\\example_input_2\\configuration_file.json";
+        String [] arg = configPath.split("\\\\");
         String path = "";
         for (int i = 0; i<arg.length - 1; i++)
         {
-            path += arg[i]+"/";
+            path += arg[i]+"\\";
         }
         String cameraPath = path;
         String liDarPath = path;
@@ -65,12 +70,12 @@ public class GurionRockRunner {
             {
                 cameras.add(new Camera(camCongif.id, camCongif.frequency));
             }
-            cameraPath += config.Cameras.camera_datas_path;
+            cameraPath += config.Cameras.camera_datas_path.substring(2);
             for (LidarConfiguration lidar : config.Lidars.LidarConfigurations) 
             {
                 lidarWorkers.add(new LiDarWorkerTracker(lidar.id, lidar.frequency));
             }
-            liDarPath += config.Lidars.lidars_data_path;
+            liDarPath += config.Lidars.lidars_data_path.substring(2);
         }
         catch (IOException e) 
         {
@@ -78,26 +83,29 @@ public class GurionRockRunner {
         }
 
 
-
-
-        try
+        try(FileReader reader = new FileReader(cameraPath))
         {
-            Type type = new TypeToken<Map<String, List<List<StampedDetectedObjects>>>>() {}.getType();
-            Map<String, List<List<StampedDetectedObjects>>> dataMap = gson.fromJson(new FileReader(cameraPath), type);
-
-            // Map data to cameras
-            for (Camera camera : cameras) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            for (Camera camera : cameras)
+            {
                 String cameraKey = "camera" + camera.getId();
-                if (dataMap.containsKey(cameraKey)) {
-                    // Flatten nested lists
-                    List<StampedDetectedObjects> flattenedData = new ArrayList<>();
-                    for (List<StampedDetectedObjects> nestedList : dataMap.get(cameraKey)) {
-                        flattenedData.addAll(nestedList);
+                JsonArray cameraData = root.getAsJsonArray(cameraKey);
+                JsonElement objperTimeJson = cameraData.get(0); 
+                JsonArray objPerTime = objperTimeJson.getAsJsonArray();
+                for (JsonElement cameraObject: objPerTime) 
+                {
+                    List<DetectedObject> objects = new ArrayList<>();
+                    JsonObject obj = cameraObject.getAsJsonObject();
+                    int time = obj.get("time").getAsInt();
+                    JsonArray detectedObjects = obj.getAsJsonArray("detectedObjects");
+                    for (JsonElement objectElement : detectedObjects) 
+                    {
+                        JsonObject obje = objectElement.getAsJsonObject();
+                        String id = obje.get("id").getAsString();
+                        String description = obje.get("description").getAsString();
+                        objects.add(new DetectedObject(id, description));
                     }
-                    // Add data to the camera
-                    for (StampedDetectedObjects object : flattenedData) {
-                        camera.addObjects(object.getObjects(), object.getTime());
-                    }
+                    camera.addObjects(objects, time);
                 }
             }
         }
@@ -122,8 +130,8 @@ public class GurionRockRunner {
             info.put("Error", errorObj + "disconnected");
             info.put("faultySensor", errorObj);
 
-            info.put("lastFrames", ); // Dont understand how to implement
-            Pose [] poses = new Pose[StatisticalFolder.getRuntime()];
+            info.put("lastFrames", "test"); // Dont understand how to implement
+            Pose [] poses = new Pose[StatisticalFolder.getInstance().getRuntime()];
             for(int i = 0; i < poses.length; i++)
             {
                 poses[i] = GPSIMU.getInstance().getPose(i);
@@ -132,14 +140,14 @@ public class GurionRockRunner {
         }
         else
         {
-            LandMark [] landMarks = new LandMark[StatisticalFolder.getLandmarks()];
+            LandMark [] landMarks = new LandMark[StatisticalFolder.getInstance().getNumLandmarks()];
             //Put all landmarks into the array
             info.put("WorldMap", landMarks);
         }
-        info.put("systemRuntime", StatisticalFolder.getRuntime()); // add all the nececary information.
-        info.put("numDetectedObjects", StatisticalFolder.getDetectedObjects());
-        info.put("numTrackedObjects", StatisticalFolder.getTrackedObjects());
-        info.put("numLandmarks", StatisticalFolder.getLandmarks());
+        info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
+        info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
+        info.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
+        info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
 
         
         try (FileWriter writer = new FileWriter(path + "output_file.json"))

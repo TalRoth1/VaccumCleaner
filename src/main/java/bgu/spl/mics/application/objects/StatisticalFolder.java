@@ -9,20 +9,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class StatisticalFolder
 { // check using atomicinteger
+    private static class SingeltonHolder
+	{
+		private static StatisticalFolder instance = new StatisticalFolder();
+	}
     private final AtomicInteger runtime;
     private final AtomicInteger numDetectedObjects;
     private final AtomicInteger numTrackedObjects;
     private final AtomicInteger numLandmarks;
 
    
-    public StatisticalFolder()
+    private StatisticalFolder()
     {
         this.runtime = new AtomicInteger(0);
         this.numDetectedObjects = new AtomicInteger(0);
         this.numTrackedObjects = new AtomicInteger(0);
         this.numLandmarks = new AtomicInteger(0);
     }
-
+    public static StatisticalFolder getInstance()
+    {
+        return SingeltonHolder.instance;
+    }
     public void incrementRuntime(int ticks)
     {
         this.runtime.addAndGet(ticks);
