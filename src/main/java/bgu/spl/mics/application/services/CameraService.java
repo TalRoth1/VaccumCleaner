@@ -41,9 +41,7 @@ public class CameraService extends MicroService { //// updates
     @Override
     protected void initialize()
     {
- 
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            System.out.println("CameraService " + cam.getId() + " got tick " + tick.getTick());
             this.time = tick.getTick();
             if (cam.getStat() == STATUS.ERROR)
             {

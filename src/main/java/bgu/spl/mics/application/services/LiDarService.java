@@ -75,6 +75,7 @@ public class LiDarService extends MicroService {
             this.terminate();
         });
         subscribeEvent(DetectObjectsEvent.class, detectEvt -> {
+            System.out.println("LiDarService " + liDar.getId() + " received DetectObjectsEvent");
             int detectionTime = detectEvt.getStampedDetectedObjects().getTime();
             for(DetectedObject obje : detectEvt.getObjects())
             {

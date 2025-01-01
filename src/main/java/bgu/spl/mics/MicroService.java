@@ -113,6 +113,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> Future<T> sendEvent(Event<T> e)
     {
+        System.out.println("MicroService: " + name + " sendEvent: " + e.getClass().getName());
         return messageBus.sendEvent(e);
     }
 
@@ -183,9 +184,16 @@ public abstract class MicroService implements Runnable {
                 if(m instanceof Event)
                 {
                     @SuppressWarnings("unchecked")
-                    Callback<Message> callback = (Callback<Message>)Ecallback.get(m.getClass());
-                    if (callback != null)
-                        callback.call(m);
+                    Callback<Message> callbackE = (Callback<Message>)Ecallback.get(m.getClass());
+                    if (callbackE != null)
+                        callbackE.call(m);
+                }
+                else if(m instanceof Broadcast)
+                {
+                    @SuppressWarnings("unchecked")
+                    Callback<Message> callbackB = (Callback<Message>)Bcallback.get(m.getClass());
+                    if (callbackB != null)
+                        callbackB.call(m);
                 }
             } 
             catch (Exception e)

@@ -1,7 +1,6 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -48,24 +47,29 @@ public class Camera {
         {
             this.setStatus(STATUS.DOWN);
         }
-        List<DetectedObject> result = new ArrayList<>();;
-        Iterator<StampedDetectedObjects> it = stamp.iterator();
-        while (it.hasNext()) {
-            StampedDetectedObjects sdo = it.next();
-            for(DetectedObject obj : sdo.getObjects())
+        List<DetectedObject> result = new ArrayList<>();
+        StampedDetectedObjects sdo = null;
+        for(StampedDetectedObjects stampT : stamp) 
+        {
+            if(stampT.getTime() == time)
             {
-                if ("ERROR".equals(obj.getId()))
-                {
-                    this.stat = STATUS.ERROR;
-                    return result;
-                }
-            }
-            if (sdo.getTime() == time)
-            {
-                result = sdo.getObjects();
-                it.remove();
+                sdo = stampT;
                 break;
             }
+        }
+        if (sdo == null)
+        {
+            return result;
+        }
+        for(DetectedObject obj : sdo.getObjects())
+        {
+            if ("ERROR".equals(obj.getId()))
+            {
+                this.stat = STATUS.ERROR;
+                return result;
+            }
+            StatisticalFolder.getInstance().incrementDetectedObjects(1);
+            result.add(obj);
         }
         return result;
     }
@@ -76,7 +80,6 @@ public class Camera {
         stamp.add(sdo);
         lastDetectedFrame.clear();
         lastDetectedFrame.add(obj);
-        StatisticalFolder.getInstance().incrementDetectedObjects(1);
     }
     public void addObjects(List<DetectedObject> obj, int time)
     {
@@ -87,7 +90,5 @@ public class Camera {
         }
         stamp.add(sdo);
         lastDetectedFrame = new ArrayList<>(obj);
-        StatisticalFolder.getInstance().incrementDetectedObjects(obj.size());
-
     }
 }

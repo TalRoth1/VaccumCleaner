@@ -1,10 +1,16 @@
 package bgu.spl.mics.application.objects;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * Manages the fusion of sensor data for simultaneous localization and mapping (SLAM).
@@ -29,6 +35,7 @@ public class FusionSlam
     private int terminatedCount = 0;
     private boolean errorOccurred = false;
     private String faultySensor = null;
+
 
     private FusionSlam() 
     {
@@ -169,5 +176,52 @@ public class FusionSlam
     public String getFaultySensor() 
     {
         return faultySensor;
+    }
+    public void printOutputFile(String path)
+    {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Map<String, Object>info = new HashMap<>();
+        boolean error = FusionSlam.getInstance().isErrorOccurred();
+        String errorObj = FusionSlam.getInstance().getFaultySensor();
+        if (error)
+        {
+            info.put("Error", errorObj + " disconnected");
+            info.put("faultySensor", errorObj);
+
+            info.put("lastFrames", "test"); // Dont understand how to implement
+            Pose [] poses = new Pose[StatisticalFolder.getInstance().getRuntime()];
+            for(int i = 0; i < poses.length; i++)
+            {
+                poses[i] = GPSIMU.getInstance().getPose(i);
+            }
+            info.put("Poses", poses);
+        }
+        else
+        {
+            LandMark [] landMarks = new LandMark[StatisticalFolder.getInstance().getNumLandmarks()];
+            Iterator<LandMark> it = FusionSlam.getInstance().getLandmarks().iterator();
+            for (int i = 0; i < landMarks.length; i++)
+            {
+                landMarks[i] = it.next();
+            }
+            for(LandMark landMark : landMarks)
+            {
+                info.put("WorldMap", landMark.toString());
+            }
+        }
+        info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
+        info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
+        info.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
+        info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
+
+        
+        try (FileWriter writer = new FileWriter(path + "output_file.json"))
+        {
+            gson.toJson(info, writer);
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
     }
 }

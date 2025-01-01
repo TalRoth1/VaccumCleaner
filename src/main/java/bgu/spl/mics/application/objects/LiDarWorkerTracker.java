@@ -1,7 +1,6 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,13 +69,11 @@ public class LiDarWorkerTracker
     public List<TrackedObject> getObjects(int time)
     {
         List<TrackedObject> result = new LinkedList<TrackedObject>();
-        Iterator<TrackedObject> it = lastTrackedObjects.iterator();
-
-        while (it.hasNext()) {
-            TrackedObject obj = it.next();
-            if (obj.getTime() + frequency <= time) {
+        for (TrackedObject obj : lastTrackedObjects)
+        {
+            if (obj.getTime() == time)
+            {
                 result.add(obj);
-                it.remove();
             }
         }
         if (!result.isEmpty()) {

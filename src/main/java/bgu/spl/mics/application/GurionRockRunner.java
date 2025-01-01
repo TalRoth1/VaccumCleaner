@@ -1,13 +1,9 @@
 package bgu.spl.mics.application;
 
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,11 +15,8 @@ import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.GPSIMU;
-import bgu.spl.mics.application.objects.LandMark;
 import bgu.spl.mics.application.objects.LiDarDataBase;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
-import bgu.spl.mics.application.objects.Pose;
-import bgu.spl.mics.application.objects.StatisticalFolder;
 import bgu.spl.mics.application.services.CameraService;
 import bgu.spl.mics.application.services.FusionSlamService;
 import bgu.spl.mics.application.services.LiDarService;
@@ -123,6 +116,8 @@ public class GurionRockRunner {
 
 
         // Start the simulation
+
+
         FusionSlam.getInstance().setTotalMicroservices(cameras.size() + lidarWorkers.size() + 1);
         for (Camera camera : cameras)
         {
@@ -142,54 +137,20 @@ public class GurionRockRunner {
         FusionSlamService fusionSlamService = new FusionSlamService(FusionSlam.getInstance());
         Thread fusionThread = new Thread(fusionSlamService);
         fusionThread.start();
-        TimeService timeService = new TimeService(config.TickTime,config.Duration);
+        TimeService timeService = new TimeService(config.TickTime, config.Duration);
         Thread timThread = new Thread(timeService);
         timThread.start();
 
-
-
-        Map<String, Object>info = new HashMap<>();
-        boolean error = FusionSlam.getInstance().isErrorOccurred();
-        String errorObj = FusionSlam.getInstance().getFaultySensor();
-        if (error)
+        // Wait for the simulation to end
+        try
         {
-            info.put("Error", errorObj + "disconnected");
-            info.put("faultySensor", errorObj);
-
-            info.put("lastFrames", "test"); // Dont understand how to implement
-            Pose [] poses = new Pose[StatisticalFolder.getInstance().getRuntime()];
-            for(int i = 0; i < poses.length; i++)
-            {
-                poses[i] = GPSIMU.getInstance().getPose(i);
-            }
-            info.put("Poses", poses);
-        }
-        else
-        {
-            LandMark [] landMarks = new LandMark[StatisticalFolder.getInstance().getNumLandmarks()];
-            Iterator<LandMark> it = FusionSlam.getInstance().getLandmarks().iterator();
-            for (int i = 0; i < landMarks.length; i++)
-            {
-                landMarks[i] = it.next();
-            }
-            for(LandMark landMark : landMarks)
-            {
-                info.put("WorldMap", landMark.toString());
-            }
-        }
-        info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
-        info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
-        info.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
-        info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
-
-        
-        try (FileWriter writer = new FileWriter(path + "output_file.json"))
-        {
-            gson.toJson(info, writer);
-        } 
-        catch (IOException e) 
-        {
+            fusionThread.join();
+            FusionSlam.getInstance().printOutputFile(path);
+        } catch (InterruptedException e) {
+            System.err.println("Thread was interrupted: " + e.getMessage());
             e.printStackTrace();
+            // Optionally, handle cleanup or re-interrupt the thread
+            Thread.currentThread().interrupt(); // Re-interrupt the current thread
         }
     }
 
