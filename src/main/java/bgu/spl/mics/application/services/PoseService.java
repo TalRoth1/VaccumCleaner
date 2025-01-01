@@ -32,9 +32,11 @@ public class PoseService extends MicroService {
      * Subscribes to TickBroadcast and sends PoseEvents at every tick based on the current pose.
      */
     @Override
-    protected void initialize() {
+    protected void initialize()
+    {
         subscribeBroadcast(TickBroadcast.class, tick ->{
             this.time = tick.getTick();
+            gpsimu.setTime(time);
             if (gpsimu.getStatus() == STATUS.ERROR) {
                 sendBroadcast(new CrashedBroadcast("GPSIMU"));
                 terminate();
@@ -58,5 +60,6 @@ public class PoseService extends MicroService {
         subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
             terminate();
         });
+        System.out.println("GPSIMU is up");
     }
 }

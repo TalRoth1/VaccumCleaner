@@ -41,16 +41,20 @@ public class CameraService extends MicroService { //// updates
     @Override
     protected void initialize()
     {
+ 
         subscribeBroadcast(TickBroadcast.class, tick -> {
+            System.out.println("CameraService " + cam.getId() + " got tick " + tick.getTick());
             this.time = tick.getTick();
-            if (cam.getStat() == STATUS.ERROR) {
+            if (cam.getStat() == STATUS.ERROR)
+            {
                 // Broadcast a crash
                 String sensorName = "Camera" + cam.getId();
                 sendBroadcast(new CrashedBroadcast(sensorName));
                 terminate();
                 return;
             }
-            if (cam.getStat() == STATUS.DOWN) {
+            if (cam.getStat() == STATUS.DOWN)
+            {
                 // No more data => normal termination
                 FusionSlam.getInstance().serviceTerminated(getName());
                 terminate();
@@ -79,6 +83,6 @@ public class CameraService extends MicroService { //// updates
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();
         });
-        
+        System.out.println("CameraService " + cam.getId() + " is up");
     }
 }

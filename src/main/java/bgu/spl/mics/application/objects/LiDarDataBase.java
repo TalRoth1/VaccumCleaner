@@ -65,12 +65,12 @@ public class LiDarDataBase
         }
         return SingeltonHolder.instance;
     }
-    public static List<CloudPoint> getDistance(String id)
+    public static List<CloudPoint> getDistance(String id, int time)
     {
         List<CloudPoint> result = new LinkedList<CloudPoint>();
         for(StampedCloudPoints points : getInstance("").cloudPoints)
         {
-            if (points.getObjectId() == id)
+            if (points.getObjectId() == id && points.getTimestamp() == time)
             {
                 result.addAll(points.getCloudPoints());
             }

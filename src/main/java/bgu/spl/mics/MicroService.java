@@ -124,6 +124,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final void sendBroadcast(Broadcast b)
     {
+        System.out.println("MicroService: " + name + " sendBroadcast: " + b.getClass().getName());
         messageBus.sendBroadcast(b);
     }
 

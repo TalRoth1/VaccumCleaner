@@ -33,12 +33,25 @@ public class GPSIMU {
     public int getTick() {
         return this.currentTick;
     }
-    public Pose getPose(int time) {
+    public Pose getPose(int time) 
+    {
+        if (currentTick == PoseList.get(PoseList.size() - 1).getTime())
+        {
+            status = STATUS.DOWN;
+        }
         for(Pose pos : this.PoseList)
         {
             if(pos.getTime() == time)
                 return pos;
         }
         return null;
+    }
+    public void setTime(int time)
+    {
+        this.currentTick = time;
+    }
+    public void addPose(Pose pose)
+    {
+        this.PoseList.add(pose);
     }
 }

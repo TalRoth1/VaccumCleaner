@@ -46,5 +46,6 @@ public class TimeService extends MicroService
             }
         });
         timerThread.start();
+        System.out.println("TimeService is up");
     }
 }

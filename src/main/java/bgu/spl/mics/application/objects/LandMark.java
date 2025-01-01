@@ -6,7 +6,8 @@ import java.util.List;
  * Represents a landmark in the environment map.
  * Landmarks are identified and updated by the FusionSlam service.
  */
-public class LandMark {
+public class LandMark 
+{
     private final String id;
     private final String description;
     private List<CloudPoint> coordinates;
@@ -35,6 +36,11 @@ public class LandMark {
 
     public void setCoordinates(List<CloudPoint> newcord)
     {
-        coordinates= newcord;
+        coordinates = newcord;
+    }
+
+    public String toString()
+    {
+        return "Landmark " + id + ": " + description + " at " + coordinates;
     }
 }

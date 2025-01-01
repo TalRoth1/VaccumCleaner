@@ -7,7 +7,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import bgu.spl.mics.application.messages.TerminatedBroadcast;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -24,12 +23,14 @@ public class MessageBusImpl implements MessageBus {
 	private Map<Class<? extends Message>, Queue<MicroService>> Bsubscribers;
 	private Map<MicroService, BlockingQueue<Message>> queues; 
 	private Map<Event<?>, Future<?>> futures;
+	private Object lock;
 	private MessageBusImpl()
 	{
 		Esubscribers = new ConcurrentHashMap<>();
 		Bsubscribers = new ConcurrentHashMap<>();
 		queues = new ConcurrentHashMap<>();
 		futures = new ConcurrentHashMap<>();
+		lock = new Object();
 	}
 	public static MessageBusImpl getInstance()
 	{
@@ -38,17 +39,23 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) 
 	{
-		if(!Esubscribers.containsKey(type))
-			Esubscribers.put(type, new LinkedList<MicroService>());
-		Esubscribers.get(type).add(m);
+		synchronized (lock)
+		{
+			if(!Esubscribers.containsKey(type))
+				Esubscribers.put(type, new LinkedList<MicroService>());
+			Esubscribers.get(type).add(m);
+		}
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m)
 	{
-		if(!Bsubscribers.containsKey(type))
-			Bsubscribers.put(type, new LinkedList<MicroService>());
-		Bsubscribers.get(type).add(m);
+		synchronized (lock)
+		{
+			if(!Bsubscribers.containsKey(type))
+				Bsubscribers.put(type, new LinkedList<MicroService>());
+			Bsubscribers.get(type).add(m);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -68,6 +75,7 @@ public class MessageBusImpl implements MessageBus {
 	public void sendBroadcast(Broadcast b) 
 	{
 		Queue<MicroService> ms = Bsubscribers.get(b.getClass());
+		System.out.println("Broadcast: " + b.getClass().getName());
 		if(ms == null)
 			return;
 		for (MicroService m : ms) 
@@ -79,6 +87,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) /// chancge sync
 	{
+		System.out.println("Event: " + e.getClass().getName());
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
 			return null;	
@@ -104,7 +113,6 @@ public class MessageBusImpl implements MessageBus {
 			return;
 		if(!queues.containsKey(m))
 			queues.put(m, new LinkedBlockingQueue<Message>());
-		Bsubscribers.get(TerminatedBroadcast.class).add(m);
 	}
 
 	@Override

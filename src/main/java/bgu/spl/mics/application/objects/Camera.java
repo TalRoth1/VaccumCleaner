@@ -13,15 +13,13 @@ public class Camera {
     private int frequancy;
     private STATUS stat; 
     private List<StampedDetectedObjects> stamp;
-    private final StatisticalFolder stats;
     private List<DetectedObject> lastDetectedFrame;
 
-    public Camera(int id, int frequancy, StatisticalFolder stats)
+    public Camera(int id, int frequancy)
     {
         this.id = id;
         this.frequancy = frequancy;
         this.stat = STATUS.UP;
-        this.stats = stats;
         this.lastDetectedFrame = new ArrayList<>();
         this.stamp = new ArrayList<>();
 
@@ -44,14 +42,26 @@ public class Camera {
     public void setStatus(STATUS newStatus) {
         this.stat = newStatus;
     }
-    // need to check whem update to down
     public List<DetectedObject> getObjects(int time)
     {
+        if (time == stamp.get(stamp.size() - 1).getTime())
+        {
+            this.setStatus(STATUS.DOWN);
+        }
         List<DetectedObject> result = new ArrayList<>();;
         Iterator<StampedDetectedObjects> it = stamp.iterator();
         while (it.hasNext()) {
             StampedDetectedObjects sdo = it.next();
-            if (sdo.getTime() == time) {
+            for(DetectedObject obj : sdo.getObjects())
+            {
+                if ("ERROR".equals(obj.getId()))
+                {
+                    this.stat = STATUS.ERROR;
+                    return result;
+                }
+            }
+            if (sdo.getTime() == time)
+            {
                 result = sdo.getObjects();
                 it.remove();
                 break;
@@ -66,22 +76,18 @@ public class Camera {
         stamp.add(sdo);
         lastDetectedFrame.clear();
         lastDetectedFrame.add(obj);
-        stats.incrementDetectedObjects(1);
+        StatisticalFolder.getInstance().incrementDetectedObjects(1);
     }
     public void addObjects(List<DetectedObject> obj, int time)
     {
         StampedDetectedObjects sdo = new StampedDetectedObjects(time);
         for(DetectedObject obje : obj)
         {
-            if ("ERROR".equals(obje.getId())) {
-                this.stat= STATUS.ERROR;
-                return;
-            }
             sdo.addObject(obje);
         }
         stamp.add(sdo);
         lastDetectedFrame = new ArrayList<>(obj);
-        stats.incrementDetectedObjects(obj.size());
+        StatisticalFolder.getInstance().incrementDetectedObjects(obj.size());
 
     }
 }

@@ -16,17 +16,15 @@ public class LiDarWorkerTracker
     private int frequency;
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
-    private final StatisticalFolder stats;
     private List<TrackedObject> lastFrame;
 
 
 
-    public LiDarWorkerTracker(int id, int freq, StatisticalFolder stats)
+    public LiDarWorkerTracker(int id, int freq)
     {
         this.id = id;
         this.frequency = freq;
         this.status = STATUS.UP;
-        this.stats = stats;
         this.lastTrackedObjects = new ArrayList<>();
         this.lastFrame = new ArrayList<>();
 
@@ -51,21 +49,22 @@ public class LiDarWorkerTracker
     }
     public void addObject(DetectedObject obj, int time)
     {
-        if ("ERROR".equals(obj.getId())) {
+        if ("ERROR".equals(obj.getId()))
+        {
             // We found an error => set status=ERROR
             this.status = STATUS.ERROR;
             return;
         }
-        List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId());
-         if (coords == null) {
+        List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId(), time);
+        if (coords == null) 
+        {
             coords = new ArrayList<>();
         }
         TrackedObject tObj = new TrackedObject(obj.getId(), time, obj.getDesc(), coords);
         this.lastTrackedObjects.add(tObj);
-        stats.incrementTrackedObjects(1);
+        StatisticalFolder.getInstance().incrementTrackedObjects(1);
         lastFrame.clear();
         lastFrame.add(tObj);
-
     }
 
     public List<TrackedObject> getObjects(int time)
@@ -86,5 +85,4 @@ public class LiDarWorkerTracker
         return result;
     
     }
-    // case of no more object 
 }

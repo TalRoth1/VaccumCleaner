@@ -45,7 +45,8 @@ public class LiDarService extends MicroService {
      * and sets up the necessary callbacks for processing data.
      */
     @Override
-    protected void initialize() {
+    protected void initialize() 
+    {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             currentTime = tick.getTick();
             if (liDar.getsStatus() == STATUS.ERROR) {
@@ -81,5 +82,6 @@ public class LiDarService extends MicroService {
             }
             complete(detectEvt,true);
         });
+        System.out.println("LiDarService " + liDar.getId() + " is up");
     }
 }

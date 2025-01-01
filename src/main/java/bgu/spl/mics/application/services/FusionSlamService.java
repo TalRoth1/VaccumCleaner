@@ -39,7 +39,8 @@ public class FusionSlamService extends MicroService {
      */
    
      @Override
-    protected void initialize() {
+    protected void initialize() 
+    {
         subscribeEvent(TrackedObjectsEvent.class, event -> {
         List<TrackedObject> trackedObjects = event.getTrackedObjects();
         if (trackedObjects == null || trackedObjects.isEmpty()) {
@@ -62,7 +63,9 @@ public class FusionSlamService extends MicroService {
         });
 
         subscribeBroadcast(CrashedBroadcast.class, crash -> {
+            FusionSlam.getInstance().onCrash(crash.getServiceName());
             terminate();
         });
+        System.out.println("FusionSlamService is up");
     }         
 }
