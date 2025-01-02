@@ -91,7 +91,8 @@ public class MessageBusImpl implements MessageBus {
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
 			return null;	
-		synchronized (ms) {	
+		synchronized (ms)
+		{	
 			MicroService head = ms.poll();
 			if (head == null)
 				return null;

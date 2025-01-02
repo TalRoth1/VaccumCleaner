@@ -17,6 +17,7 @@ import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.LiDarDataBase;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
+import bgu.spl.mics.application.objects.Pose;
 import bgu.spl.mics.application.services.CameraService;
 import bgu.spl.mics.application.services.FusionSlamService;
 import bgu.spl.mics.application.services.LiDarService;
@@ -50,6 +51,7 @@ public class GurionRockRunner {
         }
         String cameraPath = path;
         String liDarPath = path;
+        String posePath = path;
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         List<Camera> cameras = new ArrayList<>();
         List<LiDarWorkerTracker> lidarWorkers = new ArrayList<>();
@@ -72,6 +74,7 @@ public class GurionRockRunner {
                 lidarWorkers.add(new LiDarWorkerTracker(lidar.id, lidar.frequency));
             }
             liDarPath += config.LiDarWorkers.lidars_data_path.substring(2);
+            posePath += config.poseJsonFile.substring(2);
         }
         catch (IOException e) 
         {
@@ -112,8 +115,24 @@ public class GurionRockRunner {
 
         LiDarDataBase.getInstance(liDarPath);
 
-        // Add Pose data
-
+        try(FileReader reader = new FileReader(posePath))
+        {
+            JsonArray root = gson.fromJson(reader, JsonArray.class);
+            for (JsonElement poseElement : root)
+            {
+                JsonObject pose = poseElement.getAsJsonObject();
+                int time = pose.get("time").getAsInt();
+                float x = pose.get("x").getAsFloat();
+                float y = pose.get("y").getAsFloat();
+                float yaw = pose.get("yaw").getAsFloat();
+                Pose newPose = new Pose(x, y, yaw, time);
+                GPSIMU.getInstance().addPose(newPose);
+            }
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }        
 
         // Start the simulation
 
