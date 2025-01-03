@@ -113,7 +113,13 @@ public class GurionRockRunner {
         }
 
 
-        LiDarDataBase.getInstance(liDarPath);
+        try {
+            LiDarDataBase.getInstance(liDarPath);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.err.println("LiDarDataBase initialization failed: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         try(FileReader reader = new FileReader(posePath))
         {

@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
+import bgu.spl.mics.application.messages.ShutdownBroadcast;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrackedObjectsEvent;
@@ -25,6 +26,8 @@ import bgu.spl.mics.MicroService;
 public class LiDarService extends MicroService {
     private final LiDarWorkerTracker liDar;
     private int currentTime;
+    private boolean shutdownReceived = false; // Flag to indicate shutdown
+
     
 
     /**
@@ -55,7 +58,13 @@ public class LiDarService extends MicroService {
                 terminate();
                 return;
             }
+            if (shutdownReceived) {
+                FusionSlam.getInstance().serviceTerminated(getName());
+                terminate();
+                return;
+            }
             if (liDar.getsStatus() == STATUS.DOWN) {
+                sendBroadcast(new ShutdownBroadcast());
                 FusionSlam.getInstance().serviceTerminated(getName());
                 terminate();
                 return;
@@ -68,6 +77,10 @@ public class LiDarService extends MicroService {
                 sendEvent(event);
             }
         });
+        subscribeBroadcast(ShutdownBroadcast.class, shutdown -> {
+            shutdownReceived = true;
+        });
+
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
             this.terminate();
         });

@@ -46,7 +46,9 @@ public class FusionSlamService extends MicroService {
         if (trackedObjects == null || trackedObjects.isEmpty()) {
             return;
         }
-        fusionSlam.processTrackedObjects(trackedObjects, currentPose);
+        for (TrackedObject obj : trackedObjects) {
+            fusionSlam.handleTrackedObjectEvent(obj);
+        }
         });
 
         subscribeEvent(PoseEvent.class, poseEvent -> {

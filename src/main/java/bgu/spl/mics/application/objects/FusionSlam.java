@@ -3,11 +3,14 @@ package bgu.spl.mics.application.objects;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,13 +38,18 @@ public class FusionSlam
     private int terminatedCount = 0;
     private boolean errorOccurred = false;
     private String faultySensor = null;
+    private final ConcurrentMap<Integer, Pose> posesMap;
+    private final ConcurrentMap<Integer, List<TrackedObject>> bufferedTrackedObjects;
+
 
 
     private FusionSlam() 
     {
-        this.landmarks = new HashMap<>();
+        this.landmarks =  new ConcurrentHashMap<>();
         this.currentTick = 0;
-        this.poses = new ArrayList<>();
+        this.poses =  Collections.synchronizedList(new ArrayList<>());
+         this.posesMap = new ConcurrentHashMap<>();
+        this.bufferedTrackedObjects = new ConcurrentHashMap<>();
     }
     public void setTotalMicroservices(int total) {
         this.totalMicroservices = total;
@@ -58,6 +66,13 @@ public class FusionSlam
     public void addPose(Pose pose) {
         if (pose != null) {
             poses.add(pose);
+            posesMap.put(pose.getTime(), pose); // Assuming Pose has getTimestamp()
+    
+            // Check for buffered TrackedObjects for this timestamp
+            List<TrackedObject> pendingObjects = bufferedTrackedObjects.remove(pose.getTime());
+            if (pendingObjects != null) {
+                processTrackedObjects(pendingObjects, pose);
+            }
         }
     }
     /**
@@ -69,13 +84,30 @@ public class FusionSlam
      */
     
     public void processTrackedObjects(List<TrackedObject> trackedObjects, Pose currentPose) {
-        if (trackedObjects == null || trackedObjects.isEmpty()) return;
-        for (TrackedObject obj : trackedObjects)
-        {
-            List<CloudPoint> globalPoints = transformCoordinates(obj.getCoordinates(), currentPose);
+        if (trackedObjects != null && !trackedObjects.isEmpty()) {
+            for (TrackedObject obj : trackedObjects) {
+                processTrackedObject(obj, currentPose);
+            }
+        }
+    }
+    public void processTrackedObject(TrackedObject obj, Pose pose) {
+        if (obj != null && pose != null) {
+            List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);
             String objectId = obj.getId();
             String desc = obj.getDescription();
-            updateLandmark(objectId, desc, globalPoints);
+            this.updateLandmark(objectId, desc, globalPoints);
+        }
+    }
+    public void handleTrackedObjectEvent(TrackedObject obj) {
+        if (obj == null) return;
+    
+        int objTime = obj.getTime(); 
+    
+        Pose correspondingPose = posesMap.get(objTime);
+        if (correspondingPose != null) {
+            processTrackedObject(obj, correspondingPose);
+        } else {
+            bufferedTrackedObjects.computeIfAbsent(objTime, k -> new ArrayList<>()).add(obj);
         }
     }
     private List<CloudPoint> transformCoordinates(List<CloudPoint> coordinates, Pose pose) 
@@ -98,20 +130,22 @@ public class FusionSlam
 
     public void updateLandmark(String objectId, String desc, List<CloudPoint> newPoints) 
     {
-        if (objectId == null || newPoints == null || newPoints.isEmpty())
-            return;
-        if (!landmarks.containsKey(objectId))
-        {
-            LandMark lm = new LandMark(objectId, desc, newPoints);
-            landmarks.put(objectId, lm);
-            if (StatisticalFolder.getInstance() != null) 
-                StatisticalFolder.getInstance().incrementLandmarks(1);
-        } 
-        else 
-        {
-            LandMark existing = landmarks.get(objectId);
-            List<CloudPoint> merged = averageCoordinates(existing.getCoordinates(), newPoints);
-            existing.setCoordinates(merged);
+        if (objectId != null && newPoints != null && !newPoints.isEmpty()) {
+            synchronized (landmarks) {
+                LandMark lm;
+                if (!this.landmarks.containsKey(objectId)) {
+                    lm = new LandMark(objectId, desc, newPoints);
+                    this.landmarks.put(objectId, lm);
+                    if (StatisticalFolder.getInstance() != null) {
+                        StatisticalFolder.getInstance().incrementLandmarks(1);
+                    }
+                } 
+                else {
+                    lm = this.landmarks.get(objectId);
+                    List<CloudPoint> merged = this.averageCoordinates(lm.getCoordinates(), newPoints);
+                    lm.setCoordinates(merged);
+                }
+            }
         }
     }
 
@@ -138,9 +172,10 @@ public class FusionSlam
     /**
      * @return The list of all landmarks.
      */
-    public List<LandMark> getLandmarks()
-    {
-        return new ArrayList<>(landmarks.values());
+    public List<LandMark> getLandmarks() {
+        synchronized (landmarks) {
+            return new ArrayList<>(this.landmarks.values());
+        }
     }
 
     /**
@@ -167,6 +202,8 @@ public class FusionSlam
     {
         if (terminatedCount == totalMicroservices) 
         {
+            System.out.println("All microservices have terminated successfully.");
+
         }
     }
     public boolean isErrorOccurred() 
@@ -215,12 +252,11 @@ public class FusionSlam
         info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
 
         
-        try (FileWriter writer = new FileWriter(path + "output_file.json"))
-        {
+        try (FileWriter writer = new FileWriter(path + "output_file.json")) {
             gson.toJson(info, writer);
-        } 
-        catch (IOException e) 
-        {
+            System.out.println("Output file generated at: " + path + "output_file.json");
+        } catch (IOException e) {
+            System.err.println("Failed to write output file: " + e.getMessage());
             e.printStackTrace();
         }
     }
