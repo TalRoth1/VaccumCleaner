@@ -47,6 +47,7 @@ public class LiDarService extends MicroService {
      * Registers the service to handle DetectObjectsEvents and TickBroadcasts,
      * and sets up the necessary callbacks for processing data.
      */
+    @SuppressWarnings("unused")
     @Override
     protected void initialize() 
     {
@@ -76,6 +77,11 @@ public class LiDarService extends MicroService {
             System.out.println(getName() + " currentTime: " + currentTime + ", stampedTime: " + stampedTime);
             List<TrackedObject> list = liDar.getObjects(stampedTime); 
             System.out.println(list.size()+"list tracked object size"); 
+            if (list == null) {
+                System.out.println(getName() + ": No tracked objects retrieved for stamped time: " + stampedTime);
+                return;
+            }
+            System.out.println(getName() + " retrieved " + list.size() + " tracked objects.");
             if (!list.isEmpty()) {
                 System.out.println(getName() + " preparing to send TrackedObjectsEvent with " + list.size() + " objects.");
                 TrackedObjectsEvent event = new TrackedObjectsEvent(list);
@@ -94,14 +100,26 @@ public class LiDarService extends MicroService {
             this.terminate();
         });
         subscribeEvent(DetectObjectsEvent.class, detectEvt -> {
-            System.out.println("LiDarService " + liDar.getId() + " received DetectObjectsEvent");
+            System.out.println(getName() + " received DetectObjectsEvent.");
             int detectionTime = detectEvt.getStampedDetectedObjects().getTime();
-            for(DetectedObject obje : detectEvt.getObjects())
-            {
-                liDar.addObject(obje, detectionTime);
+
+            for (DetectedObject obj : detectEvt.getObjects()) {
+                if (obj == null) {
+                    System.out.println(getName() + ": Encountered null DetectedObject in DetectObjectsEvent.");
+                    continue;
+                }
+                try {
+                    liDar.addObject(obj, detectionTime);
+                } catch (Exception e) {
+                    System.err.println(getName() + ": Failed to process DetectedObject with ID: " + obj.getId());
+                    e.printStackTrace();
+                }
             }
-            complete(detectEvt,true);
+
+            complete(detectEvt, true);
+            System.out.println(getName() + " successfully processed DetectObjectsEvent.");
         });
-        System.out.println("LiDarService " + liDar.getId() + " is up");
+
+        System.out.println("LiDarService " + liDar.getId() + " is up and running.");
     }
 }

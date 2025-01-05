@@ -1,7 +1,7 @@
 {
   "lastFrames": "test",
-  "numTrackedObjects": 37,
-  "numLandmarks": 7,
+  "numTrackedObjects": 17,
+  "numLandmarks": 3,
   "Error": "Camera1 disconnected",
   "Poses": [
     {
