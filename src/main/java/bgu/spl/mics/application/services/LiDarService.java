@@ -75,7 +75,7 @@ public class LiDarService extends MicroService {
             }
             System.out.println(getName() + " currentTime: " + currentTime + ", stampedTime: " + stampedTime);
             List<TrackedObject> list = liDar.getObjects(stampedTime); 
-            
+            System.out.println(list.size()+"list tracked object size"); 
             if (!list.isEmpty()) {
                 System.out.println(getName() + " preparing to send TrackedObjectsEvent with " + list.size() + " objects.");
                 TrackedObjectsEvent event = new TrackedObjectsEvent(list);

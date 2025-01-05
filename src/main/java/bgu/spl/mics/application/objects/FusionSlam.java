@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -66,9 +65,8 @@ public class FusionSlam
     public void addPose(Pose pose) {
         if (pose != null) {
             poses.add(pose);
-            posesMap.put(pose.getTime(), pose); // Assuming Pose has getTimestamp()
+            posesMap.put(pose.getTime(), pose); 
     
-            // Check for buffered TrackedObjects for this timestamp
             List<TrackedObject> pendingObjects = bufferedTrackedObjects.remove(pose.getTime());
             if (pendingObjects != null) {
                 processTrackedObjects(pendingObjects, pose);
@@ -104,7 +102,6 @@ public class FusionSlam
             }
             String objectId = obj.getId();
             String desc = obj.getDescription();
-            System.err.println("here");
             this.updateLandmark(objectId, desc, globalPoints);
         }
     }
@@ -216,6 +213,7 @@ public class FusionSlam
     }
     public synchronized void serviceTerminated(String microServiceName) {
         terminatedCount++;
+        System.out.println(microServiceName+ " terminated"+ terminatedCount);
         checkForFinish();
     }
     
@@ -260,26 +258,27 @@ public class FusionSlam
         }
         else
         {
-            List<LandMark> landMarks = FusionSlam.getInstance().getLandmarks();
-        if (landMarks.isEmpty()) {
+        if (landmarks.isEmpty()) 
             System.out.println("FusionSlam: No landmarks to serialize.");
-        } else {
+         
+        else {
             List<Map<String, Object>> worldMap = new ArrayList<>();
-            for(LandMark landMark : landMarks) {
+            for(LandMark landMark : landmarks.values()) {
                 Map<String, Object> lmMap = new HashMap<>();
                 lmMap.put("id", landMark.getId());
                 lmMap.put("description", landMark.getDescription());
                 lmMap.put("coordinates", landMark.getCoordinates());
                 worldMap.add(lmMap);
+                System.out.println("num landmark "+ worldMap.size()+ " output");
             }
             info.put("WorldMap", worldMap);
             System.out.println("FusionSlam: Serialized " + worldMap.size() + " landmarks.");
         }
-    
         }
         info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
         info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
         info.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
+        System.out.println(StatisticalFolder.getInstance().getNumLandmarks() + " num statistical folder"+ landmarks.size()+ " num landmarks file");
         info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
 
         
