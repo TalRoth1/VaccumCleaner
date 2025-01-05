@@ -104,6 +104,7 @@ public class FusionSlam
             }
             String objectId = obj.getId();
             String desc = obj.getDescription();
+            System.err.println("here");
             this.updateLandmark(objectId, desc, globalPoints);
         }
     }
