@@ -39,7 +39,6 @@ public class TimeService extends MicroService
             try {
                 for (int tick = 1; tick <= duration; tick++) 
                 {
-                    System.out.println("TimeService is sending tick " + tick);
                     StatisticalFolder.getInstance().incrementRuntime(1);
                     sendBroadcast(new TickBroadcast(tick));
                     Thread.sleep(tickTime);

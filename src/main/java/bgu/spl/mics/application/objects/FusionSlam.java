@@ -203,7 +203,6 @@ public class FusionSlam
         if (terminatedCount == totalMicroservices) 
         {
             System.out.println("All microservices have terminated successfully.");
-
         }
     }
     public boolean isErrorOccurred() 
@@ -257,7 +256,7 @@ public class FusionSlam
             System.out.println("Output file generated at: " + path + "output_file.json");
         } catch (IOException e) {
             System.err.println("Failed to write output file: " + e.getMessage());
-            e.printStackTrace();
+            e.printStackTrace(); 
         }
     }
 }

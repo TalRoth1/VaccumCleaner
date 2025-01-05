@@ -113,7 +113,6 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> Future<T> sendEvent(Event<T> e)
     {
-        System.out.println("MicroService: " + name + " sendEvent: " + e.getClass().getName());
         return messageBus.sendEvent(e);
     }
 
@@ -125,7 +124,6 @@ public abstract class MicroService implements Runnable {
      */
     protected final void sendBroadcast(Broadcast b)
     {
-        System.out.println("MicroService: " + name + " sendBroadcast: " + b.getClass().getName());
         messageBus.sendBroadcast(b);
     }
 
@@ -201,7 +199,7 @@ public abstract class MicroService implements Runnable {
                 Thread.currentThread().interrupt();
                 terminate();
             }
+            // WHY DID WE UNREGISTER HERE?!?!?!?!?!?
         }
-        messageBus.unregister(this);
     }
 }

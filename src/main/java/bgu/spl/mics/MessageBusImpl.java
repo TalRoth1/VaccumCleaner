@@ -75,7 +75,6 @@ public class MessageBusImpl implements MessageBus {
 	public void sendBroadcast(Broadcast b) 
 	{
 		Queue<MicroService> ms = Bsubscribers.get(b.getClass());
-		System.out.println("Broadcast: " + b.getClass().getName());
 		if(ms == null)
 			return;
 		for (MicroService m : ms) 
@@ -87,7 +86,6 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) /// chancge sync
 	{
-		System.out.println("Event: " + e.getClass().getName());
 		Queue<MicroService> ms = Esubscribers.get(e.getClass());
 		if(ms == null || ms.isEmpty())
 			return null;	
@@ -96,9 +94,12 @@ public class MessageBusImpl implements MessageBus {
 			MicroService head = ms.poll();
 			if (head == null)
 				return null;
-			BlockingQueue<Message> que = queues.get(head);
-			if(que == null || que.isEmpty())
+			BlockingQueue<Message> que = queues.get(head); // THE PROBLEM WAS HERE!!!!!!!!!!
+			if(que == null)
+			{
+				ms.offer(head);
 				return null;
+			}
 			ms.offer(head);
 			que.offer(e);
 			Future<T> future = new Future<>();

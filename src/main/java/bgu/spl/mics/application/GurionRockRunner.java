@@ -11,8 +11,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import bgu.spl.mics.application.GurionRockRunner.CameraConfiguration;
-import bgu.spl.mics.application.GurionRockRunner.LidarConfiguration;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.FusionSlam;
@@ -44,7 +42,7 @@ public class GurionRockRunner {
      */
     public static void main(String[] args) //gets one arg, the path to config file 
     {
-        String configPath = "C:\\Users\\Asus\\Desktop\\spl2\\VaccumCleaner\\example_input_2";
+        String configPath = "D:\\Projects\\SPL\\Vaccum Cleaner\\example_input_2\\configuration_file.json";
         String [] arg = configPath.split("\\\\");
         String path = "";
         for (int i = 0; i<arg.length - 1; i++)
