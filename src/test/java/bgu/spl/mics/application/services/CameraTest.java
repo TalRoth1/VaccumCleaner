@@ -16,14 +16,13 @@ import java.util.ArrayList;
  * that prepare data before sending (e.g., addObject, addObjects, checking "ERROR").
  */
 public class CameraTest {
-
     private Camera camera;
     private StatisticalFolder stats;
 
     @BeforeEach
     public void setUp() {
-        stats = new StatisticalFolder();
-        camera = new Camera(1, 2, stats); // id=1, freq=2, some stats folder
+        stats= StatisticalFolder.getInstance();
+        camera = new Camera(1, 2); // id=1, freq=2, some stats folder
     }
 
     @Test
