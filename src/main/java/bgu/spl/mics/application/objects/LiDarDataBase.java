@@ -29,7 +29,7 @@ public class LiDarDataBase {
         private String initializationPath = null;
     
         // Private constructor to prevent external instantiation
-        private LiDarDataBase() {
+        public LiDarDataBase() {
             this.cloudPoints = new LinkedList<>();
         }
             /**
