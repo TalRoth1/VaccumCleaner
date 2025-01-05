@@ -43,11 +43,13 @@ public class FusionSlamService extends MicroService {
     {
         subscribeEvent(TrackedObjectsEvent.class, event -> {
         List<TrackedObject> trackedObjects = event.getTrackedObjects();
+        System.out.println(getName() + " received TrackedObjectsEvent with " + trackedObjects.size() + " objects.");
         if (trackedObjects == null || trackedObjects.isEmpty()) {
             return;
         }
         for (TrackedObject obj : trackedObjects) {
             fusionSlam.handleTrackedObjectEvent(obj);
+            System.out.println(getName() + " processed TrackedObjectsEvent for object ID: " + obj.getId());
         }
         });
 

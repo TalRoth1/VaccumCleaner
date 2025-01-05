@@ -1,8 +1,10 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * LiDarWorkerTracker is responsible for managing a LiDAR worker.
@@ -16,7 +18,7 @@ public class LiDarWorkerTracker
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
     private List<TrackedObject> lastFrame;
-
+    private Map<Integer, List<TrackedObject>>  trackedObjectsByTime;
 
 
     public LiDarWorkerTracker(int id, int freq)
@@ -26,6 +28,8 @@ public class LiDarWorkerTracker
         this.status = STATUS.UP;
         this.lastTrackedObjects = new ArrayList<>();
         this.lastFrame = new ArrayList<>();
+        trackedObjectsByTime = new HashMap<>();// added for efficent 
+
 
     }
     public int getId()
@@ -46,7 +50,7 @@ public class LiDarWorkerTracker
     public void setStatus(STATUS newStatus) {
         this.status = newStatus;
     }
-    public void addObject(DetectedObject obj, int time)
+    public synchronized void addObject(DetectedObject obj, int time)// add syncr
     {
         if ("ERROR".equals(obj.getId()))
         {
@@ -57,16 +61,18 @@ public class LiDarWorkerTracker
         List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId(), time);
         if (coords == null) 
         {
+            System.out.println("LiDarWorkerTracker: No coordinates found for object ID: " + obj.getId() + " at time: " + time);
             coords = new ArrayList<>();
         }
+        System.out.println("LiDarWorkerTracker: Retrieved " + coords.size() + " coordinates for object ID: " + obj.getId() + " at time: " + time);
         TrackedObject tObj = new TrackedObject(obj.getId(), time, obj.getDesc(), coords);
+        trackedObjectsByTime.computeIfAbsent(time, k -> new ArrayList<>()).add(tObj);
         this.lastTrackedObjects.add(tObj);
         StatisticalFolder.getInstance().incrementTrackedObjects(1);
-        lastFrame.clear();
-        lastFrame.add(tObj);
+        lastFrame.add(tObj);// remove all clear
     }
 
-    public List<TrackedObject> getObjects(int time)
+    public synchronized List<TrackedObject> getObjects(int time) // add sync
     {
         List<TrackedObject> result = new LinkedList<TrackedObject>();
         for (TrackedObject obj : lastTrackedObjects)
@@ -78,6 +84,7 @@ public class LiDarWorkerTracker
         }
         if (!result.isEmpty()) {
             lastFrame = new ArrayList<>(result);
+            System.out.println("LiDarWorkerTracker: Retrieved " + result.size() + " objects for time " + time);
         }
         return result;
     

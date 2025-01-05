@@ -41,6 +41,10 @@ public class LandMark
 
     public String toString()
     {
-        return "Landmark " + id + ": " + description + " at " + coordinates;
+        return "LandMark{" +
+        "id='" + id + '\'' +
+        ", description='" + description + '\'' +
+        ", coordinates=" + coordinates +
+        '}';
     }
 }

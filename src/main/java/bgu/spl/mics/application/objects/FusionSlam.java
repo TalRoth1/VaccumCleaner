@@ -86,36 +86,54 @@ public class FusionSlam
     public void processTrackedObjects(List<TrackedObject> trackedObjects, Pose currentPose) {
         if (trackedObjects != null && !trackedObjects.isEmpty()) {
             for (TrackedObject obj : trackedObjects) {
+                System.out.println("Processing TrackedObject ID: " + obj.getId());
                 processTrackedObject(obj, currentPose);
             }
+        }
+        else {
+            System.out.println("No TrackedObjects to process at current pose.");
         }
     }
     public void processTrackedObject(TrackedObject obj, Pose pose) {
         if (obj != null && pose != null) {
+            System.out.println("Transforming coordinates for TrackedObject ID: " + obj.getId());
             List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);
+            if (globalPoints == null) {
+                System.out.println("Transformation failed for TrackedObject ID: " + obj.getId());
+                return;
+            }
             String objectId = obj.getId();
             String desc = obj.getDescription();
             this.updateLandmark(objectId, desc, globalPoints);
         }
     }
     public void handleTrackedObjectEvent(TrackedObject obj) {
-        if (obj == null) return;
-    
+        if (obj == null){
+            System.out.println("Received null TrackedObjectEvent.");
+            return;
+        }
+         
         int objTime = obj.getTime(); 
     
         Pose correspondingPose = posesMap.get(objTime);
         if (correspondingPose != null) {
+            System.out.println("Processing TrackedObject ID: " + obj.getId() + " at time: " + objTime);
             processTrackedObject(obj, correspondingPose);
         } else {
+            System.out.println("No corresponding Pose found for time: " + objTime + ". Buffering TrackedObject ID: " + obj.getId());
             bufferedTrackedObjects.computeIfAbsent(objTime, k -> new ArrayList<>()).add(obj);
         }
     }
     private List<CloudPoint> transformCoordinates(List<CloudPoint> coordinates, Pose pose) 
     {
-        if (coordinates == null) 
+        if (coordinates == null) {
+            System.out.println("Received null coordinates for transformation.");
             return new ArrayList<>();
-        if (pose == null)
+        }
+        if (pose == null){
+            System.out.println("Received null pose for transformation.");
             return null;
+        }
         List<CloudPoint> result = new LinkedList<CloudPoint>();
         for(CloudPoint coords : coordinates)
         {
@@ -125,6 +143,7 @@ public class FusionSlam
             double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
             result.add(new CloudPoint(transformedX, transformedY));
         }
+        System.out.println("Transformed " + coordinates.size() + " coordinates for pose at time: " + pose.getTime());
         return result;
     }
 
@@ -136,16 +155,21 @@ public class FusionSlam
                 if (!this.landmarks.containsKey(objectId)) {
                     lm = new LandMark(objectId, desc, newPoints);
                     this.landmarks.put(objectId, lm);
+                    System.out.println("Added new LandMark: " + objectId + " with " + newPoints.size() + " points.");
                     if (StatisticalFolder.getInstance() != null) {
                         StatisticalFolder.getInstance().incrementLandmarks(1);
+                        System.out.println("Incremented landmarks count in StatisticalFolder.");
                     }
                 } 
                 else {
                     lm = this.landmarks.get(objectId);
                     List<CloudPoint> merged = this.averageCoordinates(lm.getCoordinates(), newPoints);
                     lm.setCoordinates(merged);
+                    System.out.println("Updated LandMark: " + objectId + " with merged coordinates.");
                 }
             }
+        }else{
+            System.out.println("Invalid parameters for updateLandmark. objectId: " + objectId + ", newPoints size: " + (newPoints != null ? newPoints.size() : "null"));
         }
     }
 
@@ -221,6 +245,7 @@ public class FusionSlam
         String errorObj = FusionSlam.getInstance().getFaultySensor();
         if (error)
         {
+            System.out.println("Error detected: " + errorObj + " disconnected.");
             info.put("Error", errorObj + " disconnected");
             info.put("faultySensor", errorObj);
 
@@ -234,16 +259,22 @@ public class FusionSlam
         }
         else
         {
-            LandMark [] landMarks = new LandMark[StatisticalFolder.getInstance().getNumLandmarks()];
-            Iterator<LandMark> it = FusionSlam.getInstance().getLandmarks().iterator();
-            for (int i = 0; i < landMarks.length; i++)
-            {
-                landMarks[i] = it.next();
+            List<LandMark> landMarks = FusionSlam.getInstance().getLandmarks();
+        if (landMarks.isEmpty()) {
+            System.out.println("FusionSlam: No landmarks to serialize.");
+        } else {
+            List<Map<String, Object>> worldMap = new ArrayList<>();
+            for(LandMark landMark : landMarks) {
+                Map<String, Object> lmMap = new HashMap<>();
+                lmMap.put("id", landMark.getId());
+                lmMap.put("description", landMark.getDescription());
+                lmMap.put("coordinates", landMark.getCoordinates());
+                worldMap.add(lmMap);
             }
-            for(LandMark landMark : landMarks)
-            {
-                info.put("WorldMap", landMark.toString());
-            }
+            info.put("WorldMap", worldMap);
+            System.out.println("FusionSlam: Serialized " + worldMap.size() + " landmarks.");
+        }
+    
         }
         info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
         info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());

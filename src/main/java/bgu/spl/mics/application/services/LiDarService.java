@@ -70,11 +70,17 @@ public class LiDarService extends MicroService {
                 return;
             }
             int stampedTime = currentTime - liDar.getFreq();
+            if (stampedTime < 0) {
+                return; 
+            }
+            System.out.println(getName() + " currentTime: " + currentTime + ", stampedTime: " + stampedTime);
             List<TrackedObject> list = liDar.getObjects(stampedTime); 
             
             if (!list.isEmpty()) {
+                System.out.println(getName() + " preparing to send TrackedObjectsEvent with " + list.size() + " objects.");
                 TrackedObjectsEvent event = new TrackedObjectsEvent(list);
                 sendEvent(event);
+                System.out.println(getName() + " sent TrackedObjectsEvent for object ID: ");
             }
         });
         subscribeBroadcast(ShutdownBroadcast.class, shutdown -> {

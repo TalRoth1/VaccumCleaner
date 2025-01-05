@@ -42,7 +42,8 @@ public class GurionRockRunner {
      */
     public static void main(String[] args) //gets one arg, the path to config file 
     {
-        String configPath = "D:\\Projects\\SPL\\Vaccum Cleaner\\example_input_2\\configuration_file.json";
+        
+        String configPath = "C:\\Users\\Asus\\Desktop\\spl2\\VaccumCleaner\\example input\\configuration_file.json";
         String [] arg = configPath.split("\\\\");
         String path = "";
         for (int i = 0; i<arg.length - 1; i++)
@@ -107,6 +108,7 @@ public class GurionRockRunner {
                         objects.add(new DetectedObject(id, description));
                     }
                     camera.addObjects(objects, time);
+                    System.out.println("CameraService-" + " started.");
                 }
             }
         }
@@ -136,6 +138,8 @@ public class GurionRockRunner {
                 float yaw = pose.get("yaw").getAsFloat();
                 Pose newPose = new Pose(x, y, yaw, time);
                 GPSIMU.getInstance().addPose(newPose);
+                System.out.println("LiDarService-" + " started.");
+
             }
         }
         catch(IOException e)
@@ -168,14 +172,17 @@ public class GurionRockRunner {
         TimeService timeService = new TimeService(config.TickTime, config.Duration);
         Thread timThread = new Thread(timeService);
         timThread.start();
+        System.out.println("TimeService started.");
+
 
         // Wait for the simulation to end
         try
         {
+            System.out.println("Waiting for FusionSlamService to terminate.");
             fusionThread.join();
+            System.err.println("Thread was interrupted");
             FusionSlam.getInstance().printOutputFile(path);
         } catch (InterruptedException e) {
-            System.err.println("Thread was interrupted: " + e.getMessage());
             e.printStackTrace();
             // Optionally, handle cleanup or re-interrupt the thread
             Thread.currentThread().interrupt(); // Re-interrupt the current thread
