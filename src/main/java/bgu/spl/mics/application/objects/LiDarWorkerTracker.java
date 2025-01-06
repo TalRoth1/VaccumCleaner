@@ -27,7 +27,8 @@ public class LiDarWorkerTracker
         this.frequency = freq;
         this.status = STATUS.UP;
         this.lastTrackedObjects = Collections.synchronizedList(new ArrayList<>());
-        this.lastFrame =Collections.synchronizedList(new ArrayList<>());
+        this.lastFrame = Collections.synchronizedList(new ArrayList<>());
+        this.lastFrame.add(new TrackedObject("init", 0, "Initialize", new LinkedList<>()));
         this.pendingObjects = new ConcurrentHashMap<>(); 
 
 
@@ -41,7 +42,7 @@ public class LiDarWorkerTracker
         return this.frequency;
     }
     public List<TrackedObject> getLastFrame() {
-        return new ArrayList<>(lastFrame);
+        return lastFrame;
     }
     public STATUS getsStatus()
     {
@@ -65,13 +66,15 @@ public class LiDarWorkerTracker
             this.lastTrackedObjects.add(tObj);
             System.out.println("Added new TrackedObject with ID: " + obj.getId() + " at time: " + time);
         }
+        if(lastFrame.get(0).getTime() != time)
+            lastFrame.clear();
+        lastFrame.add(tObj);
         StatisticalFolder.getInstance().incrementTrackedObjects(1);
-        lastFrame.clear(); // Clear last frame for the next tick
     }
 
 
     public ArrayList<TrackedObject> processDetectedObjects(StampedDetectedObjects objects, int currentTick) {
-        int processingTime= objects.getTime() + frequency;   
+        int processingTime = objects.getTime() + frequency;   
         ArrayList<TrackedObject> allProcessedObjects = new ArrayList<>();
     
         // Process all pending objects with times <= processingTime
@@ -97,7 +100,8 @@ public class LiDarWorkerTracker
         return allProcessedObjects;
     }
     @SuppressWarnings("unused")
-    private ArrayList<TrackedObject> processObjectsAtTime(StampedDetectedObjects objects) {
+    private ArrayList<TrackedObject> processObjectsAtTime(StampedDetectedObjects objects)
+    {
         ArrayList<TrackedObject> trackedObjects = new ArrayList<>();
         if (objects == null) {
             System.out.println("processObjectsAtTime: StampedDetectedObjects is null.");
@@ -127,9 +131,9 @@ public class LiDarWorkerTracker
             }
 
             System.out.println("Tracked objects incremented by: " + trackedObjects.size());
-            lastFrame.clear();
-            lastFrame=lastTrackedObjects;// change to be here unp
-        } else {
+        } 
+        else
+        {
             System.out.println("No objects to track at this time.");
         }
 
@@ -164,7 +168,6 @@ public class LiDarWorkerTracker
         }    
 
         if (!result.isEmpty()) {
-            lastFrame = new ArrayList<>(result);
             System.out.println("LiDarWorkerTracker: Retrieved " + result.size() + " objects for time " + time);
         }
         else
@@ -205,6 +208,11 @@ public class LiDarWorkerTracker
         }
         ((StampedDetectedObjects) pendingObjects.computeIfAbsent(time, k -> new ArrayList<>())).addObject(obj);
         System.out.println("LiDarWorkerTracker: Added DetectedObject ID: " + obj.getId() + " to pending list for time: " + time);
+    }
+
+    public List<TrackedObject> getAllObjects()
+    {
+        return this.lastTrackedObjects;
     }
     
 }

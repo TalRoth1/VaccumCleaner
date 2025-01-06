@@ -243,13 +243,15 @@ public class FusionSlam
     {
         return faultySensor;
     }
-    public void printOutputFile(String path, List<Camera> cameras, List<LiDarWorkerTracker> Lidars)
+    public void printOutputFile(String path, List<Camera> cameras, List<LiDarWorkerTracker> lidars)
     {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Map<String, Object>info = new LinkedHashMap<>();
         Map<String, Object>stats = new LinkedHashMap<>();
         boolean error = FusionSlam.getInstance().isErrorOccurred();
         String errorObj = FusionSlam.getInstance().getFaultySensor();
+        String errorMSG = "";
+        String [] classification = errorObj.split(" ");
         stats.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
         stats.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
         stats.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
@@ -272,12 +274,58 @@ public class FusionSlam
         }
         if (error)
         {
-            
+            if(classification[0].equals("Camera"))
+            {
+                for(Camera cam : cameras)
+                {
+                    if ((cam.getId() + "").equals(classification[1]))
+                    {
+                        for(StampedDetectedObjects objects : cam.getAllObjects())
+                        {
+                            for(DetectedObject obj : objects.getObjects())
+                            {
+                                if(obj.getId().equals("ERROR"))
+                                {
+                                    errorMSG = obj.getDesc();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if(classification[0].equals("LiDar"))
+            {
+                for(LiDarWorkerTracker lidar : lidars)
+                {
+                    if ((lidar.getId() + "").equals(classification[1]))
+                    {
+                        for(TrackedObject object : lidar.getAllObjects())
+                        {
+                            if(object.getId().equals("ERROR"))
+                                errorMSG = object.getDescription();
+                        }
+                    }
+                }
+            }
             System.out.println("Error detected: " + errorObj + " disconnected.");
-            info.put("error", errorObj + " disconnected");
+            info.put("error", errorMSG);
             info.put("faultySensor", errorObj);
-            LinkedHashMap<String, LinkedHashMap<String, Object>> lframse = new LinkedHashMap<>();
-            info.put("lastFrames", "test"); // Dont understand how to implement
+            LinkedHashMap<String, Object> lcframes = new LinkedHashMap<>();
+            for(Camera camera : cameras)
+            {
+                List<StampedDetectedObjects> ldf = camera.getLastDetectedFrame();
+                lcframes.put("Camera " + camera.getId(), ldf.get(0));
+            }
+            info.put("lastCameraFrames", lcframes);
+
+            LinkedHashMap<String, Object> llframes = new LinkedHashMap<>();
+            for(LiDarWorkerTracker lidar : lidars)
+            {
+                List<TrackedObject> ldf = lidar.getLastFrame();
+                llframes.put("LidarWorkerTracker" + lidar.getId(), ldf);
+            }
+            info.put("lastLidarFrames", llframes);
             Pose [] poses = new Pose[StatisticalFolder.getInstance().getRuntime()];
             for(int i = 0; i < poses.length; i++)
             {
