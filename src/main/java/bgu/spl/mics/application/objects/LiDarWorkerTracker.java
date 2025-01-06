@@ -58,30 +58,45 @@ public class LiDarWorkerTracker
             this.status = STATUS.ERROR;
             return;
         }
-        List<CloudPoint> coords = LiDarDataBase.getDistance(obj.getId(), time);
-        if (coords == null) 
-        {
-            System.out.println("LiDarWorkerTracker: No coordinates found for object ID: " + obj.getId() + " at time: " + time);
-            coords = new ArrayList<>();
+        TrackedObject tObj = findTrackedObjectInLast(obj.getId(), time);
+        if (tObj == null) {
+            // Add new tracked object if it doesn't exist in the lastTrackedObjects
+            tObj = new TrackedObject(obj.getId(), time, obj.getDesc(), LiDarDataBase.getInstance("").getCloudPoints(obj.getId(),time).getCloudPoints());
+            this.lastTrackedObjects.add(tObj);
+            System.out.println("Added new TrackedObject with ID: " + obj.getId() + " at time: " + time);
         }
-        System.out.println("LiDarWorkerTracker: Retrieved " + coords.size() + " coordinates for object ID: " + obj.getId() + " at time: " + time);
-        TrackedObject tObj = new TrackedObject(obj.getId(), time, obj.getDesc(), coords);
-        this.lastTrackedObjects.add(tObj);
-        System.out.println("num tracked object" +lastTrackedObjects.size());
         StatisticalFolder.getInstance().incrementTrackedObjects(1);
-        lastFrame.clear();
-        }
+        lastFrame.clear(); // Clear last frame for the next tick
+    }
+
 
     public ArrayList<TrackedObject> processDetectedObjects(StampedDetectedObjects objects, int currentTick) {
-        int processingTime = objects.getTime() + frequency;
+        int processingTime= objects.getTime() + frequency;   
+        ArrayList<TrackedObject> allProcessedObjects = new ArrayList<>();
+    
+        // Process all pending objects with times <= processingTime
+        List<Integer> timesToProcess = new ArrayList<>(pendingObjects.keySet());
+        for (int time : timesToProcess) {
+            if (time <= processingTime) {
+                List<StampedDetectedObjects> objectsList = pendingObjects.remove(time);
+                if (objectsList != null) {
+                    System.out.println("Processing pending objects for time: " + time);
+                    for (StampedDetectedObjects pendingObject : objectsList) {
+                        allProcessedObjects.addAll(processObjectsAtTime(pendingObject));
+                    }
+                }
+            }
+        }    
         if (processingTime > currentTick) {
             pendingObjects.computeIfAbsent(processingTime, k -> new ArrayList<>()).add(objects);
             System.out.println("Object added to pendingObjects for time: " + processingTime);
-            return new ArrayList<>();
+            return allProcessedObjects;
         }
        
-        return processObjectsAtTime(objects);
+        allProcessedObjects.addAll(processObjectsAtTime(objects));
+        return allProcessedObjects;
     }
+    @SuppressWarnings("unused")
     private ArrayList<TrackedObject> processObjectsAtTime(StampedDetectedObjects objects) {
         ArrayList<TrackedObject> trackedObjects = new ArrayList<>();
         if (objects == null) {
@@ -94,20 +109,14 @@ public class LiDarWorkerTracker
         return trackedObjects; // Return empty list
         }
 
-        for (DetectedObject obj : objects.getObjects()) {
-            if ("ERROR".equals(obj.getId())) {
-                status = STATUS.ERROR;
-                System.out.println("processObjectsAtTime: ERROR object encountered. Setting status to ERROR.");
-                return new ArrayList<>(); // Return empty list on error
-            }
+        for (DetectedObject obj : detectedObjects) {
 
-            StampedCloudPoints cloudPoints =LiDarDataBase.getCloudPoints(obj.getId(), objects.getTime());
-            if (cloudPoints != null) {
-                trackedObjects.add(new TrackedObject(obj.getId(), objects.getTime(), obj.getDesc(), cloudPoints.getCloudPoints()));
+            TrackedObject trackedObj = findTrackedObjectInLast(obj.getId(), objects.getTime());
+            if (trackedObj != null) {
+                System.out.println("Found cloud points in lastTrackedObjects for object ID: " + obj.getId());
+                trackedObjects.add(trackedObj);
             } else {
-                status = STATUS.ERROR;
-                System.out.println("No cloud points found for object: " + obj.getId());
-                return new ArrayList<>(); // Return empty list on error
+                System.out.println("No cloud points found in lastTrackedObjects for object ID: " + obj.getId());
             }
         }
 
@@ -118,7 +127,6 @@ public class LiDarWorkerTracker
             }
 
             System.out.println("Tracked objects incremented by: " + trackedObjects.size());
-            lastTrackedObjects = trackedObjects;
             lastFrame.clear();
             lastFrame=lastTrackedObjects;// change to be here unp
         } else {
@@ -127,23 +135,33 @@ public class LiDarWorkerTracker
 
         return trackedObjects;
     }
-
-    public synchronized List<TrackedObject> getObjects(int time) {
-        List<StampedDetectedObjects> pendingForTime = pendingObjects.remove(time);
-        if (pendingForTime != null) {
-            System.out.println("pending not null");/// not get here
-            for (StampedDetectedObjects obj : pendingForTime) {
-                processObjectsAtTime(obj);
+    private TrackedObject findTrackedObjectInLast(String id, int time) {
+        synchronized (lastTrackedObjects) {
+            for (TrackedObject trackedObj : lastTrackedObjects) {
+                if (trackedObj.getId().equals(id) && trackedObj.getTime() == time) {
+                    return trackedObj;
+                }
             }
         }
+        return null; // Return null if no matching tracked object is found
+    }
+
+    public synchronized List<TrackedObject> getObjects(int time) {
         List<TrackedObject> result = new LinkedList<>();
         for (TrackedObject obj : lastTrackedObjects) {
             System.out.println("Object time: " + obj.getTime() + " | Requested time: " + time);
-            if (obj.getTime() == time) {
+            if (obj.getTime() <= time) {
                 result.add(obj);
                 System.out.println(result.size() + " objects retrieved for time " + time);
             }
         }
+        List<StampedDetectedObjects> pendingForTime = pendingObjects.get(time);
+        if (pendingForTime != null) {
+            System.out.println("pending not null");/// not get here
+            for (StampedDetectedObjects obj : pendingForTime) {
+                result.addAll(processObjectsAtTime(obj));
+            }
+        }    
 
         if (!result.isEmpty()) {
             lastFrame = new ArrayList<>(result);

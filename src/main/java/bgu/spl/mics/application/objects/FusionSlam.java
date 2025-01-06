@@ -95,7 +95,8 @@ public class FusionSlam
     public void processTrackedObject(TrackedObject obj, Pose pose) {
         if (obj != null && pose != null) {
             System.out.println("Transforming coordinates for TrackedObject ID: " + obj.getId());
-            List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);
+            List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);// size 0
+            System.out.println("process tracked object in fusion slam"+ obj.getCoordinates().size() +" list cord");
             if (globalPoints == null) {
                 System.out.println("Transformation failed for TrackedObject ID: " + obj.getId());
                 return;
@@ -115,7 +116,8 @@ public class FusionSlam
     
         Pose correspondingPose = posesMap.get(objTime);
         if (correspondingPose != null) {
-            System.out.println("Processing TrackedObject ID: " + obj.getId() + " at time: " + objTime);
+            System.out.println("coord: " + correspondingPose.getX());
+            System.out.println("Processing TrackedObject ID: " + obj.getId() + " at time: " + objTime+ "obj coord: " +obj.getCoordinates().size());
             processTrackedObject(obj, correspondingPose);
         } else {
             System.out.println("No corresponding Pose found for time: " + objTime + ". Buffering TrackedObject ID: " + obj.getId());
@@ -133,6 +135,7 @@ public class FusionSlam
             return null;
         }
         List<CloudPoint> result = new LinkedList<CloudPoint>();
+        System.out.println("coords size"+ coordinates.size());//// is 0! 
         for(CloudPoint coords : coordinates)
         {
             double x = coords.getX();

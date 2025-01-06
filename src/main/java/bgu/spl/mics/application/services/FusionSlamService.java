@@ -48,6 +48,7 @@ public class FusionSlamService extends MicroService {
             return;
         }
         for (TrackedObject obj : trackedObjects) {
+            System.out.println("service fusion coords"+ obj.getCoordinates().size());
             fusionSlam.handleTrackedObjectEvent(obj);
             System.out.println(getName() + " processed TrackedObjectsEvent for object ID: " + obj.getId());
         }

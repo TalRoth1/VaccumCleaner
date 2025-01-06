@@ -70,15 +70,10 @@ public class LiDarService extends MicroService {
                 terminate();
                 return;
             }
-            int stampedTime = currentTime - liDar.getFreq();
-            if (stampedTime < 0) {
-                return; 
-            }
-            System.out.println(getName() + " currentTime: " + currentTime + ", stampedTime: " + stampedTime);
-            List<TrackedObject> list = liDar.getObjects(stampedTime); 
-            System.out.println(list.size()+"list tracked object size"); 
+            List<TrackedObject> list = liDar.getObjects(currentTime); 
+            System.out.println("list tracked object size"+ list.size()+" at time"+ currentTime); 
             if (list == null) {
-                System.out.println(getName() + ": No tracked objects retrieved for stamped time: " + stampedTime);
+                System.out.println(getName() + ": No tracked objects retrieved for stamped time: " + currentTime);
                 return;
             }
             System.out.println(getName() + " retrieved " + list.size() + " tracked objects.");

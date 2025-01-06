@@ -128,7 +128,8 @@ public class LiDarDataBase {
                 return result;
             }
         }
-        public static StampedCloudPoints getCloudPoints(String id, int time) {
+        
+        public StampedCloudPoints getCloudPoints(String id, int time) {
             synchronized (lock) {
                 for (StampedCloudPoints points : getInstance("").cloudPoints) {
                     if (points.getObjectId().equals(id) && points.getTimestamp() == time) {
