@@ -43,7 +43,7 @@ public class PoseService extends MicroService {
                 return;
             }
             if (gpsimu.getStatus() == STATUS.DOWN) {
-                FusionSlam.getInstance().serviceTerminated(getName());
+                FusionSlam.getInstance().serviceTerminated();
                 terminate();
                 return;
             }

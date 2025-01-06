@@ -43,7 +43,7 @@ public class GurionRockRunner {
     public static void main(String[] args) //gets one arg, the path to config file 
     {
         
-        String configPath = "C:\\Users\\Asus\\Desktop\\spl2\\VaccumCleaner\\example input\\configuration_file.json";
+        String configPath = "D:\\Projects\\SPL\\Vaccum Cleaner\\example_input_2\\configuration_file.json";
         String [] arg = configPath.split("\\\\");
         String path = "";
         for (int i = 0; i<arg.length - 1; i++)
@@ -150,7 +150,7 @@ public class GurionRockRunner {
         // Start the simulation
 
 
-        FusionSlam.getInstance().setTotalMicroservices(cameras.size() + lidarWorkers.size() + 1);
+        FusionSlam.getInstance().setTotalMicroservices(cameras.size() + lidarWorkers.size() );
         for (Camera camera : cameras)
         {
             CameraService cameraService = new CameraService(camera);
@@ -181,7 +181,7 @@ public class GurionRockRunner {
             System.out.println("Waiting for FusionSlamService to terminate.");
             fusionThread.join();
             System.err.println("Thread was interrupted");
-            FusionSlam.getInstance().printOutputFile(path);
+            FusionSlam.getInstance().printOutputFile(path, cameras, lidarWorkers);
         } catch (InterruptedException e) {
             e.printStackTrace();
             // Optionally, handle cleanup or re-interrupt the thread

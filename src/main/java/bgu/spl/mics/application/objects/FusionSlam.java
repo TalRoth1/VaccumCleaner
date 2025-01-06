@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -169,7 +170,9 @@ public class FusionSlam
                     System.out.println("Updated LandMark: " + objectId + " with merged coordinates.");
                 }
             }
-        }else{
+        }
+        else
+        {
             System.out.println("Invalid parameters for updateLandmark. objectId: " + objectId + ", newPoints size: " + (newPoints != null ? newPoints.size() : "null"));
         }
     }
@@ -211,16 +214,17 @@ public class FusionSlam
         return currentTick;
     }
 
-    public List<Pose> getPoses() {
+    public List<Pose> getPoses()
+    {
         return new ArrayList<>(poses);
     }
-    public synchronized void serviceTerminated(String microServiceName) {
+    public synchronized void serviceTerminated() 
+    {
         terminatedCount++;
-        System.out.println(microServiceName+ " terminated"+ terminatedCount);
         checkForFinish();
     }
-    
-    public synchronized void onCrash(String sensorName) {
+    public synchronized void onCrash(String sensorName)
+    {
         errorOccurred = true;
         faultySensor = sensorName;
     }
@@ -239,18 +243,40 @@ public class FusionSlam
     {
         return faultySensor;
     }
-    public void printOutputFile(String path)
+    public void printOutputFile(String path, List<Camera> cameras, List<LiDarWorkerTracker> Lidars)
     {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        Map<String, Object>info = new HashMap<>();
+        Map<String, Object>info = new LinkedHashMap<>();
+        Map<String, Object>stats = new LinkedHashMap<>();
         boolean error = FusionSlam.getInstance().isErrorOccurred();
         String errorObj = FusionSlam.getInstance().getFaultySensor();
+        stats.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
+        stats.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
+        stats.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
+        System.out.println(StatisticalFolder.getInstance().getNumLandmarks() + " num statistical folder"+ landmarks.size()+ " num landmarks file");
+        stats.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
+        if (landmarks.isEmpty()) 
+            System.out.println("FusionSlam: No landmarks to serialize.");
+        else
+        {
+            Map<String,Map<String, Object>> worldMap = new HashMap<>();
+            for(LandMark landMark : landmarks.values()) {
+                Map<String, Object> lmMap = new LinkedHashMap<>();
+                lmMap.put("id", landMark.getId());
+                lmMap.put("description", landMark.getDescription());
+                lmMap.put("coordinates", landMark.getCoordinates());
+                worldMap.put(landMark.getId(),lmMap);
+            }
+            stats.put("landMarks", worldMap);
+            System.out.println("FusionSlam: Serialized " + worldMap.size() + " landmarks.");
+        }
         if (error)
         {
+            
             System.out.println("Error detected: " + errorObj + " disconnected.");
-            info.put("Error", errorObj + " disconnected");
+            info.put("error", errorObj + " disconnected");
             info.put("faultySensor", errorObj);
-
+            LinkedHashMap<String, LinkedHashMap<String, Object>> lframse = new LinkedHashMap<>();
             info.put("lastFrames", "test"); // Dont understand how to implement
             Pose [] poses = new Pose[StatisticalFolder.getInstance().getRuntime()];
             for(int i = 0; i < poses.length; i++)
@@ -258,31 +284,12 @@ public class FusionSlam
                 poses[i] = GPSIMU.getInstance().getPose(i);
             }
             info.put("Poses", poses);
+            info.put("statistics", stats);
         }
         else
         {
-        if (landmarks.isEmpty()) 
-            System.out.println("FusionSlam: No landmarks to serialize.");
-         
-        else {
-            List<Map<String, Object>> worldMap = new ArrayList<>();
-            for(LandMark landMark : landmarks.values()) {
-                Map<String, Object> lmMap = new HashMap<>();
-                lmMap.put("id", landMark.getId());
-                lmMap.put("description", landMark.getDescription());
-                lmMap.put("coordinates", landMark.getCoordinates());
-                worldMap.add(lmMap);
-                System.out.println("num landmark "+ worldMap.size()+ " output");
-            }
-            info.put("WorldMap", worldMap);
-            System.out.println("FusionSlam: Serialized " + worldMap.size() + " landmarks.");
+            info = stats;
         }
-        }
-        info.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
-        info.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
-        info.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
-        System.out.println(StatisticalFolder.getInstance().getNumLandmarks() + " num statistical folder"+ landmarks.size()+ " num landmarks file");
-        info.put("numLandmarks", StatisticalFolder.getInstance().getNumLandmarks());
 
         
         try (FileWriter writer = new FileWriter(path + "output_file.json")) {

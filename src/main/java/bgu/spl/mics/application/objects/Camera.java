@@ -35,7 +35,8 @@ public class Camera {
     {
         return this.frequancy;
     }
-    public List<DetectedObject> getLastDetectedFrame() {
+    public List<DetectedObject> getLastDetectedFrame() 
+    {
         return new ArrayList<>(lastDetectedFrame);
     }
     public void setStatus(STATUS newStatus) {

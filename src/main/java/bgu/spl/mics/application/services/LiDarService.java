@@ -60,13 +60,13 @@ public class LiDarService extends MicroService {
                 return;
             }
             if (shutdownReceived) {
-                FusionSlam.getInstance().serviceTerminated(getName());
+                FusionSlam.getInstance().serviceTerminated();
                 terminate();
                 return;
             }
             if (liDar.getsStatus() == STATUS.DOWN) {
                 sendBroadcast(new ShutdownBroadcast());
-                FusionSlam.getInstance().serviceTerminated(getName());
+                FusionSlam.getInstance().serviceTerminated();
                 terminate();
                 return;
             }
