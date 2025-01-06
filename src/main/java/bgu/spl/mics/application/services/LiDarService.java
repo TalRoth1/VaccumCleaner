@@ -90,7 +90,7 @@ public class LiDarService extends MicroService {
             shutdownReceived = true;
         });
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            if(term.getServiceName()=="TimeService")
+            if(term.getServiceName().equals("TimeService"))
                 terminate();
             
         });

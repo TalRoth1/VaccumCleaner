@@ -66,7 +66,7 @@ public class FusionSlamService extends MicroService {
         subscribeBroadcast(TerminatedBroadcast.class, term -> 
         {   
             FusionSlam.getInstance().serviceTerminated(term.getServiceName());
-            if(term.getServiceName()=="TimeService")
+            if(term.getServiceName().equals("TimeService"))
                 terminate();
         });
 

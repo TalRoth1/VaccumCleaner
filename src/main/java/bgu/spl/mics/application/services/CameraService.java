@@ -74,9 +74,8 @@ public class CameraService extends MicroService { //// updates
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            if(term.getServiceName()=="TimeService")
+            if(term.getServiceName().equals("TimeService"))
                 terminate();
-            
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();

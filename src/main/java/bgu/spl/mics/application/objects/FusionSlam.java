@@ -252,7 +252,11 @@ public class FusionSlam
         boolean error = FusionSlam.getInstance().isErrorOccurred();
         String errorObj = FusionSlam.getInstance().getFaultySensor();
         String errorMSG = "";
-        String [] classification = errorObj.split(" ");
+        String [] classification = new String[0];
+        if (errorObj != null)
+        {
+            classification = errorObj.split(" ");
+        }
         stats.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
         stats.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
         stats.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());

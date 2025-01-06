@@ -59,8 +59,8 @@ public class PoseService extends MicroService {
 
         // Subscribe to TerminatedBroadcast to handle termination scenarios
         subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
-            if(terminated.getServiceName()=="TimeService"){
-            terminate();
+            if(terminated.getServiceName().equals("TimeService")){
+                terminate();
             }
         });
         System.out.println("GPSIMU is up");
