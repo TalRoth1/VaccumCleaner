@@ -85,7 +85,6 @@ public class FusionSlam
     public void processTrackedObjects(List<TrackedObject> trackedObjects, Pose currentPose) {
         if (trackedObjects != null && !trackedObjects.isEmpty()) {
             for (TrackedObject obj : trackedObjects) {
-                System.out.println("Processing TrackedObject ID: " + obj.getId());
                 processTrackedObject(obj, currentPose);
             }
         }
@@ -95,11 +94,8 @@ public class FusionSlam
     }
     public void processTrackedObject(TrackedObject obj, Pose pose) {
         if (obj != null && pose != null) {
-            System.out.println("Transforming coordinates for TrackedObject ID: " + obj.getId());
             List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);// size 0
-            System.out.println("process tracked object in fusion slam"+ obj.getCoordinates().size() +" list cord");
             if (globalPoints == null) {
-                System.out.println("Transformation failed for TrackedObject ID: " + obj.getId());
                 return;
             }
             String objectId = obj.getId();
@@ -117,11 +113,8 @@ public class FusionSlam
     
         Pose correspondingPose = posesMap.get(objTime);
         if (correspondingPose != null) {
-            System.out.println("coord: " + correspondingPose.getX());
-            System.out.println("Processing TrackedObject ID: " + obj.getId() + " at time: " + objTime+ "obj coord: " +obj.getCoordinates().size());
             processTrackedObject(obj, correspondingPose);
         } else {
-            System.out.println("No corresponding Pose found for time: " + objTime + ". Buffering TrackedObject ID: " + obj.getId());
             bufferedTrackedObjects.computeIfAbsent(objTime, k -> new ArrayList<>()).add(obj);
         }
     }
@@ -136,7 +129,6 @@ public class FusionSlam
             return null;
         }
         List<CloudPoint> result = new LinkedList<CloudPoint>();
-        System.out.println("coords size"+ coordinates.size());//// is 0! 
         for(CloudPoint coords : coordinates)
         {
             double x = coords.getX();
@@ -145,7 +137,7 @@ public class FusionSlam
             double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
             result.add(new CloudPoint(transformedX, transformedY));
         }
-        System.out.println("Transformed " + coordinates.size() + " coordinates for pose at time: " + pose.getTime());
+        //System.out.println("Transformed " + coordinates.size() + " coordinates for pose at time: " + pose.getTime());
         return result;
     }
 
@@ -160,14 +152,13 @@ public class FusionSlam
                     System.out.println("Added new LandMark: " + objectId + " with " + newPoints.size() + " points.");
                     if (StatisticalFolder.getInstance() != null) {
                         StatisticalFolder.getInstance().incrementLandmarks(1);
-                        System.out.println("Incremented landmarks count in StatisticalFolder.");
                     }
                 } 
                 else {
                     lm = this.landmarks.get(objectId);
                     List<CloudPoint> merged = this.averageCoordinates(lm.getCoordinates(), newPoints);
                     lm.setCoordinates(merged);
-                    System.out.println("Updated LandMark: " + objectId + " with merged coordinates.");
+                    //System.out.println("Updated LandMark: " + objectId + " with merged coordinates.");
                 }
             }
         }
@@ -222,6 +213,7 @@ public class FusionSlam
     {
         System.out.println("micro service terminated "+ serviceName);
         terminatedCount++;
+        System.out.println("terminated count: "+ terminatedCount);
         checkForFinish();
     }
     public synchronized void onCrash(String sensorName)
@@ -229,12 +221,14 @@ public class FusionSlam
         errorOccurred = true;
         faultySensor = sensorName;
     }
-    private void checkForFinish() 
+    public Boolean checkForFinish() 
     {
         if (terminatedCount == totalMicroservices) 
         {
             System.out.println("All microservices have terminated successfully.");
+            return true; 
         }
+        return false; 
     }
     public boolean isErrorOccurred() 
     {

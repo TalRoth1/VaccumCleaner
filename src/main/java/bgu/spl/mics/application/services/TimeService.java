@@ -51,9 +51,12 @@ public class TimeService extends MicroService
                 Thread.currentThread().interrupt();
             }
         });
-        subscribeBroadcast(TerminatedBroadcast.class, crash -> {
-            timerThread.interrupt();
-            this.terminate();
+        subscribeBroadcast(TerminatedBroadcast.class, terminate -> {
+            if ("FusionSlamService".equals(terminate.getServiceName())) {
+                System.out.println("time service stop becuse fusionslam");
+                timerThread.interrupt();
+                this.terminate();
+            }
         });
         subscribeBroadcast(CrashedBroadcast.class, crash -> {
             timerThread.interrupt();

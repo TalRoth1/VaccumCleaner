@@ -43,31 +43,39 @@ public class FusionSlamService extends MicroService {
     {
         subscribeEvent(TrackedObjectsEvent.class, event -> {
         List<TrackedObject> trackedObjects = event.getTrackedObjects();
-        System.out.println(getName() + " received TrackedObjectsEvent with " + trackedObjects.size() + " objects.");
         if (trackedObjects == null || trackedObjects.isEmpty()) {
             return;
         }
         for (TrackedObject obj : trackedObjects) {
-            System.out.println("service fusion coords"+ obj.getCoordinates().size());
             fusionSlam.handleTrackedObjectEvent(obj);
-            System.out.println(getName() + " processed TrackedObjectsEvent for object ID: " + obj.getId());
         }
         });
 
         subscribeEvent(PoseEvent.class, poseEvent -> {
             this.currentPose = poseEvent.getPose();
-            fusionSlam.addPose(this.currentPose);
+            FusionSlam.getInstance().addPose(this.currentPose);
 
         });
 
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            fusionSlam.updateTick(tick.getTick());
+            FusionSlam.getInstance().updateTick(tick.getTick());
         });
+        
         subscribeBroadcast(TerminatedBroadcast.class, term -> 
         {   
             FusionSlam.getInstance().serviceTerminated(term.getServiceName());
-            if(term.getServiceName().equals("TimeService"))
+            
+            System.out.println("check for finish :" +FusionSlam.getInstance().checkForFinish());
+            
+            if(term.getServiceName().equals("TimeService")){
                 terminate();
+                System.out.println("fusion slam finish cause= time");}
+
+            if(FusionSlam.getInstance().checkForFinish()){
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
+                terminate();
+                System.out.println("fusion slam finish cause= no more data");
+            }
         });
 
         subscribeBroadcast(CrashedBroadcast.class, crash -> {

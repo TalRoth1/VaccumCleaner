@@ -6,7 +6,6 @@ import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrackedObjectsEvent;
 import bgu.spl.mics.application.objects.DetectedObject;
-import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.LiDarWorkerTracker;
 import bgu.spl.mics.application.objects.STATUS;
 import bgu.spl.mics.application.objects.TrackedObject;
@@ -49,50 +48,47 @@ public class LiDarService extends MicroService {
      */
     @SuppressWarnings("unused")
     @Override
-    protected void initialize() 
+    protected void initialize()     
     {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             currentTime = tick.getTick();
             if (liDar.getsStatus() == STATUS.ERROR) {
-                System.out.println(liDar.getId()+ "crashed");
                 String sensorName = "LiDar" + liDar.getId();
                 sendBroadcast(new CrashedBroadcast(sensorName));
                 terminate();
                 return;
             }
             if (shutdownReceived) {
-                FusionSlam.getInstance().serviceTerminated(this.getName());
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 terminate();
+                System.out.println("shoutdown recieved");
                 return;
             }
             if (liDar.getsStatus() == STATUS.DOWN) {
-                FusionSlam.getInstance().serviceTerminated(this.getName());
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 sendBroadcast(new ShutdownBroadcast());
-                System.out.println("shoutdown suppose to sent");
                 terminate();
+                System.out.println("shoutdown suppose to be sent");
                 return;
             }
             List<TrackedObject> list = liDar.getObjects(currentTime); 
-            System.out.println("list tracked object size"+ list.size()+" at time"+ currentTime); 
             if (list == null) {
-                System.out.println(getName() + ": No tracked objects retrieved for stamped time: " + currentTime);
                 return;
             }
-            System.out.println(getName() + " retrieved " + list.size() + " tracked objects.");
             if (!list.isEmpty()) {
-                System.out.println(getName() + " preparing to send TrackedObjectsEvent with " + list.size() + " objects.");
+                System.out.println(getName() +"send TrackedObjectsEvent with " + list.size() + " objects. at time : " +currentTime);
                 TrackedObjectsEvent event = new TrackedObjectsEvent(list);
                 sendEvent(event);
-                System.out.println(getName() + " sent TrackedObjectsEvent for object ID: ");
             }
         });
         subscribeBroadcast(ShutdownBroadcast.class, shutdown -> {
             shutdownReceived = true;
         });
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            if(term.getServiceName().equals("TimeService"))
+            if(term.getServiceName().equals("TimeService")){
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 terminate();
-            
+            }
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();
@@ -109,13 +105,12 @@ public class LiDarService extends MicroService {
                 try {
                     liDar.addObject(obj, detectionTime);
                 } catch (Exception e) {
-                    System.err.println(getName() + ": Failed to process DetectedObject with ID: " + obj.getId());
                     e.printStackTrace();
                 }
             }
 
             complete(detectEvt, true);
-            System.out.println(getName() + " successfully processed DetectObjectsEvent.");
+            System.out.println(getName() + " successfully processed DetectObjectsEvent. for detection time" + detectionTime);
         });
 
         System.out.println("LiDarService " + liDar.getId() + " is up and running.");

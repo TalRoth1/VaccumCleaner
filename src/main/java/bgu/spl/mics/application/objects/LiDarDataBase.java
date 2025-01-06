@@ -139,4 +139,9 @@ public class LiDarDataBase {
                 return null; // Return null if no match is found
             }
         }
+        public int getSize() {
+            return cloudPoints.size();
+        }
+
+
 }

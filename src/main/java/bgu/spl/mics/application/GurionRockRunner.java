@@ -150,7 +150,7 @@ public class GurionRockRunner {
         // Start the simulation
 
 
-        FusionSlam.getInstance().setTotalMicroservices(cameras.size() + lidarWorkers.size() );
+        FusionSlam.getInstance().setTotalMicroservices(cameras.size() + lidarWorkers.size() +1);
         for (Camera camera : cameras)
         {
             CameraService cameraService = new CameraService(camera);

@@ -54,7 +54,7 @@ public class CameraService extends MicroService { //// updates
             }
             if (cam.getStat() == STATUS.DOWN)
             {
-                FusionSlam.getInstance().serviceTerminated(this.getName()); 
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 this.terminate();
                 return;
             }
@@ -74,8 +74,11 @@ public class CameraService extends MicroService { //// updates
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            if(term.getServiceName().equals("TimeService"))
+            if(term.getServiceName().equals("TimeService")){
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 terminate();
+
+            }      
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();

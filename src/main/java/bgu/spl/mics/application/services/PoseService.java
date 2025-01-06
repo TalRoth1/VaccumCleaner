@@ -44,7 +44,7 @@ public class PoseService extends MicroService {
                 return;
             }
             if (gpsimu.getStatus() == STATUS.DOWN) {
-                FusionSlam.getInstance().serviceTerminated(this.getName());
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 this.terminate();
                 return;
             }
@@ -60,6 +60,7 @@ public class PoseService extends MicroService {
         // Subscribe to TerminatedBroadcast to handle termination scenarios
         subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
             if(terminated.getServiceName().equals("TimeService")){
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 terminate();
             }
         });
