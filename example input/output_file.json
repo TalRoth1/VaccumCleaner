@@ -1,8 +1,12 @@
 {
+  "systemRuntime": 30,
+  "numDetectedObjects": 13,
   "numTrackedObjects": 13,
   "numLandmarks": 7,
-  "WorldMap": [
-    {
+  "landMarks": {
+    "Wall_4": {
+      "id": "Wall_4",
+      "description": "Wall",
       "coordinates": [
         {
           "x": -1.3149079357161582,
@@ -12,25 +16,25 @@
           "x": -5.6295904512563375,
           "y": 6.37074743932418
         }
-      ],
-      "description": "Wall",
-      "id": "Wall_4"
+      ]
     },
-    {
+    "Wall_3": {
+      "id": "Wall_3",
+      "description": "Wall",
       "coordinates": [
         {
-          "x": -2.382538933006815,
-          "y": -0.36602337517587635
+          "x": -1.127311458640385,
+          "y": 1.5186407446969394
         },
         {
-          "x": -2.274825309562806,
-          "y": -0.18736050991126096
+          "x": -0.9996931826133981,
+          "y": 1.4616606662623626
         }
-      ],
-      "description": "Wall",
-      "id": "Wall_3"
+      ]
     },
-    {
+    "Circular_Base_1": {
+      "id": "Circular_Base_1",
+      "description": "Circular Base",
       "coordinates": [
         {
           "x": -4.1041775432406125,
@@ -40,25 +44,25 @@
           "x": -3.8615921874052734,
           "y": 4.132947816051438
         }
-      ],
-      "description": "Circular Base",
-      "id": "Circular_Base_1"
+      ]
     },
-    {
+    "Wall_1": {
+      "id": "Wall_1",
+      "description": "Wall",
       "coordinates": [
         {
-          "x": -3.2451465834508877,
-          "y": 5.5201727758784855
+          "x": -3.140186123800439,
+          "y": 5.660863027615161
         },
         {
-          "x": -3.2819156729026044,
-          "y": 5.269280412198123
+          "x": -3.182040009090996,
+          "y": 5.398897700928574
         }
-      ],
-      "description": "Wall",
-      "id": "Wall_1"
+      ]
     },
-    {
+    "Chair_Base_1": {
+      "id": "Chair_Base_1",
+      "description": "Chair Base",
       "coordinates": [
         {
           "x": -3.609883781509518,
@@ -68,11 +72,11 @@
           "x": -3.7178791261842004,
           "y": -0.08947951719854963
         }
-      ],
-      "description": "Chair Base",
-      "id": "Chair_Base_1"
+      ]
     },
-    {
+    "Door": {
+      "id": "Door",
+      "description": "Door",
       "coordinates": [
         {
           "x": -3.2621256460025805,
@@ -82,25 +86,21 @@
           "x": -3.5951012132783844,
           "y": 3.0349154889004475
         }
-      ],
-      "description": "Door",
-      "id": "Door"
+      ]
     },
-    {
+    "Wall_5": {
+      "id": "Wall_5",
+      "description": "Wall",
       "coordinates": [
         {
-          "x": -0.010497546792309631,
-          "y": 5.769068528394053
+          "x": 1.1135390912697962,
+          "y": 3.891991156132038
         },
         {
-          "x": 0.030629202844941972,
-          "y": 5.824844154470995
+          "x": 1.1451403702866516,
+          "y": 3.826011975107087
         }
-      ],
-      "description": "Wall",
-      "id": "Wall_5"
+      ]
     }
-  ],
-  "systemRuntime": 30,
-  "numDetectedObjects": 13
+  }
 }

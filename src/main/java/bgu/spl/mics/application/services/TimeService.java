@@ -43,7 +43,7 @@ public class TimeService extends MicroService
                     sendBroadcast(new TickBroadcast(tick));
                     Thread.sleep(tickTime);
                 }
-                sendBroadcast(new TerminatedBroadcast());
+                sendBroadcast(new TerminatedBroadcast(this.getName()));
                 terminate();
             } 
             catch (InterruptedException e)

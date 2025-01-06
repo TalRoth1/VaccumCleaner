@@ -46,6 +46,7 @@ public class CameraService extends MicroService { //// updates
             if (cam.getStat() == STATUS.ERROR)
             {
                 // Broadcast a crash
+                System.out.println(cam.getId()+ "crash");
                 String sensorName = "Camera " + cam.getId();
                 sendBroadcast(new CrashedBroadcast(sensorName));
                 terminate();
@@ -53,9 +54,8 @@ public class CameraService extends MicroService { //// updates
             }
             if (cam.getStat() == STATUS.DOWN)
             {
-                // No more data => normal termination
-                FusionSlam.getInstance().serviceTerminated();
-                terminate();
+                FusionSlam.getInstance().serviceTerminated(this.getName()); 
+                this.terminate();
                 return;
             }
 
@@ -74,9 +74,9 @@ public class CameraService extends MicroService { //// updates
             }
         }); 
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            FusionSlam.getInstance().serviceTerminated();
-            terminate();
-            this.terminate();
+            if(term.getServiceName()=="TimeService")
+                terminate();
+            
         });
         subscribeBroadcast(CrashedBroadcast.class, crash ->{
             this.terminate();

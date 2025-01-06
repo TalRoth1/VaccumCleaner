@@ -63,8 +63,11 @@ public class FusionSlamService extends MicroService {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             fusionSlam.updateTick(tick.getTick());
         });
-        subscribeBroadcast(TerminatedBroadcast.class, term -> {
-            fusionSlam.serviceTerminated();
+        subscribeBroadcast(TerminatedBroadcast.class, term -> 
+        {   
+            FusionSlam.getInstance().serviceTerminated(term.getServiceName());
+            if(term.getServiceName()=="TimeService")
+                terminate();
         });
 
         subscribeBroadcast(CrashedBroadcast.class, crash -> {

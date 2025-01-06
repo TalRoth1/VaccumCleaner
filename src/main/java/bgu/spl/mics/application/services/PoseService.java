@@ -38,13 +38,14 @@ public class PoseService extends MicroService {
             this.time = tick.getTick();
             gpsimu.setTime(time);
             if (gpsimu.getStatus() == STATUS.ERROR) {
+                System.out.println("GPS crashed");
                 sendBroadcast(new CrashedBroadcast("GPSIMU"));
                 terminate();
                 return;
             }
             if (gpsimu.getStatus() == STATUS.DOWN) {
-                FusionSlam.getInstance().serviceTerminated();
-                terminate();
+                FusionSlam.getInstance().serviceTerminated(this.getName());
+                this.terminate();
                 return;
             }
             Pose currentPose = gpsimu.getPose(time);
@@ -58,7 +59,9 @@ public class PoseService extends MicroService {
 
         // Subscribe to TerminatedBroadcast to handle termination scenarios
         subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
+            if(terminated.getServiceName()=="TimeService"){
             terminate();
+            }
         });
         System.out.println("GPSIMU is up");
     }

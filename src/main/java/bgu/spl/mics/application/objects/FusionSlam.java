@@ -218,8 +218,9 @@ public class FusionSlam
     {
         return new ArrayList<>(poses);
     }
-    public synchronized void serviceTerminated() 
+    public synchronized void serviceTerminated(String serviceName) 
     {
+        System.out.println("micro service terminated "+ serviceName);
         terminatedCount++;
         checkForFinish();
     }
