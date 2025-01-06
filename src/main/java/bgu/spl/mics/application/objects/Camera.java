@@ -12,7 +12,7 @@ public class Camera {
     private int frequancy;
     private STATUS stat; 
     private List<StampedDetectedObjects> stamp;
-    private List<DetectedObject> lastDetectedFrame;
+    private List<StampedDetectedObjects> lastDetectedFrame;
 
     public Camera(int id, int frequancy)
     {
@@ -35,7 +35,7 @@ public class Camera {
     {
         return this.frequancy;
     }
-    public List<DetectedObject> getLastDetectedFrame() 
+    public List<StampedDetectedObjects> getLastDetectedFrame() 
     {
         return new ArrayList<>(lastDetectedFrame);
     }
@@ -72,6 +72,8 @@ public class Camera {
             StatisticalFolder.getInstance().incrementDetectedObjects(1);
             result.add(obj);
         }
+        lastDetectedFrame.clear();
+        lastDetectedFrame.add(sdo);
         return result;
     }
     public void addObject(DetectedObject obj, int time)
@@ -79,8 +81,6 @@ public class Camera {
         StampedDetectedObjects sdo = new StampedDetectedObjects(time);
         sdo.addObject(obj);
         stamp.add(sdo);
-        lastDetectedFrame.clear();
-        lastDetectedFrame.add(obj);
     }
     public void addObjects(List<DetectedObject> obj, int time)
     {
@@ -90,6 +90,11 @@ public class Camera {
             sdo.addObject(obje);
         }
         stamp.add(sdo);
-        lastDetectedFrame = new ArrayList<>(obj);
+        lastDetectedFrame = new ArrayList<>();
+        lastDetectedFrame.add(sdo);
+    }
+    public List<StampedDetectedObjects> getAllObjects()
+    {
+        return this.stamp;
     }
 }

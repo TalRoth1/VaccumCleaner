@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.DetectedObject;
 import bgu.spl.mics.application.objects.STATUS;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
 import bgu.spl.mics.application.objects.StatisticalFolder;
 
 import java.util.List;
@@ -31,9 +32,9 @@ public class CameraTest {
         camera.addObject(obj, 5);  // time=5
 
         // The camera should store it in a new StampedDetectedObjects
-        List<DetectedObject> lastFrame = camera.getLastDetectedFrame();
+        List<StampedDetectedObjects> lastFrame = camera.getLastDetectedFrame();
         assertFalse(lastFrame.isEmpty(), "Last frame should contain the newly added object");
-        assertEquals("Chair_1", lastFrame.get(0).getId());
+        assertEquals("Chair_1", lastFrame.get(0).getObjects().get(0).getId());
 
         assertEquals(1, stats.getNumDetectedObjects(), "Stats should have 1 detected object so far.");
     }
