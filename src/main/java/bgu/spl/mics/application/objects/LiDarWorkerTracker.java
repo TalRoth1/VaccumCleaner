@@ -141,7 +141,7 @@ public class LiDarWorkerTracker
     public synchronized List<TrackedObject> getObjects(int time) {
         List<TrackedObject> result = new LinkedList<>();
         for (TrackedObject obj : lastTrackedObjects) {
-            //System.out.println("Object time: " + obj.getTime() + " | Requested time: " + time);
+            System.out.println("Object time: " + obj.getTime() + " | Requested time: " + time);
             if (obj.getTime() <= time) {
                 result.add(obj);// if i try to remove from list after choose we cant
             }
@@ -154,7 +154,7 @@ public class LiDarWorkerTracker
         }    
 
         if (!result.isEmpty()) {
-            //system.out.println("LiDarWorkerTracker: Retrieved " + result.size() + " objects for time " + time);
+            System.out.println("LiDarWorkerTracker: Retrieved " + result.size() + " objects for time " + time);
         }
         else
             System.out.println("get objects list empty");

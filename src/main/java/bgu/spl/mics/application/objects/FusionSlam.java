@@ -81,28 +81,6 @@ public class FusionSlam
      * @param pose        The robot's current pose.
      * @return Transformed coordinates in the global frame.
      */
-    
-    public void processTrackedObjects(List<TrackedObject> trackedObjects, Pose currentPose) {
-        if (trackedObjects != null && !trackedObjects.isEmpty()) {
-            for (TrackedObject obj : trackedObjects) {
-                processTrackedObject(obj, currentPose);
-            }
-        }
-        else {
-            System.out.println("No TrackedObjects to process at current pose.");
-        }
-    }
-    public void processTrackedObject(TrackedObject obj, Pose pose) {
-        if (obj != null && pose != null) {
-            List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);// size 0
-            if (globalPoints == null) {
-                return;
-            }
-            String objectId = obj.getId();
-            String desc = obj.getDescription();
-            this.updateLandmark(objectId, desc, globalPoints);
-        }
-    }
     public void handleTrackedObjectEvent(TrackedObject obj) {
         if (obj == null){
             System.out.println("Received null TrackedObjectEvent.");
@@ -118,28 +96,65 @@ public class FusionSlam
             bufferedTrackedObjects.computeIfAbsent(objTime, k -> new ArrayList<>()).add(obj);
         }
     }
-    private List<CloudPoint> transformCoordinates(List<CloudPoint> coordinates, Pose pose) 
-    {
-        if (coordinates == null) {
-            System.out.println("Received null coordinates for transformation.");
-            return new ArrayList<>();
+
+    
+    public void processTrackedObject(TrackedObject obj, Pose pose) {
+        if (obj != null && pose != null) {
+            List<CloudPoint> globalPoints = this.transformCoordinates(obj.getCoordinates(), pose);
+
+            if (globalPoints == null) {
+                return;
+            }
+            String objectId = obj.getId();
+            String desc = obj.getDescription();           
+            this.updateLandmark(objectId, desc, globalPoints);
+            
+            if(obj.getTime()==10 & objectId.equals("Wall_1")){
+                List<CloudPoint> updateobj= landmarks.get(objectId).getCoordinates(); 
+                for(CloudPoint updated:updateobj ){
+                    System.out.println("updated x :" + updated.getX()+"updated y :" + updated.getY());
+                }
+            }
+
+           
         }
-        if (pose == null){
-            System.out.println("Received null pose for transformation.");
-            return null;
-        }
-        List<CloudPoint> result = new LinkedList<CloudPoint>();
-        for(CloudPoint coords : coordinates)
-        {
-            double x = coords.getX();
-            double y = coords.getY();
-            double transformedX = x * Math.cos(pose.getYaw()) - y * Math.sin(pose.getYaw()) + pose.getX();
-            double transformedY = x * Math.sin(pose.getYaw()) + y * Math.cos(pose.getYaw()) + pose.getY();
-            result.add(new CloudPoint(transformedX, transformedY));
-        }
-        //System.out.println("Transformed " + coordinates.size() + " coordinates for pose at time: " + pose.getTime());
-        return result;
     }
+
+    public void processTrackedObjects(List<TrackedObject> trackedObjects, Pose currentPose) {
+        if (trackedObjects != null && !trackedObjects.isEmpty()) {
+            for (TrackedObject obj : trackedObjects) {
+                processTrackedObject(obj, currentPose);
+            }
+        }
+        else {
+            System.out.println("No TrackedObjects to process at current pose.");
+        }
+    }
+    
+    private List<CloudPoint> transformCoordinates(List<CloudPoint> localCoordinates, Pose robotPose) {
+        List<CloudPoint> globalCoordinates = new ArrayList<>();
+    
+        if (localCoordinates == null || robotPose == null) {
+            System.out.println("Error: Missing coordinates or pose for transformation.");
+            return globalCoordinates;
+        }
+    
+        double robotX = robotPose.getX();
+        double robotY = robotPose.getY();
+        double yaw = Math.toRadians((robotPose.getYaw())); 
+    
+        for (CloudPoint localPoint : localCoordinates) {
+            double localX = localPoint.getX();
+            double localY = localPoint.getY();
+    
+            double globalX = localX * Math.cos(yaw) - localY * Math.sin(yaw) + robotX;
+            double globalY = localX * Math.sin(yaw) + localY * Math.cos(yaw) + robotY;
+    
+            globalCoordinates.add(new CloudPoint(globalX, globalY));
+        }    
+        return globalCoordinates;
+    }
+    
 
     public void updateLandmark(String objectId, String desc, List<CloudPoint> newPoints) 
     {
@@ -149,16 +164,17 @@ public class FusionSlam
                 if (!this.landmarks.containsKey(objectId)) {
                     lm = new LandMark(objectId, desc, newPoints);
                     this.landmarks.put(objectId, lm);
-                    System.out.println("Added new LandMark: " + objectId + " with " + newPoints.size() + " points.");
                     if (StatisticalFolder.getInstance() != null) {
                         StatisticalFolder.getInstance().incrementLandmarks(1);
                     }
                 } 
                 else {
                     lm = this.landmarks.get(objectId);
+                    if(objectId=="Wall_1"){
+                        List<CloudPoint> merged = this.averageCoordinates(lm.getCoordinates(), newPoints);
+                    }
                     List<CloudPoint> merged = this.averageCoordinates(lm.getCoordinates(), newPoints);
                     lm.setCoordinates(merged);
-                    //System.out.println("Updated LandMark: " + objectId + " with merged coordinates.");
                 }
             }
         }

@@ -3,7 +3,6 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.PoseEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
-import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.Pose;
 import bgu.spl.mics.application.objects.STATUS;
