@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,7 @@ public class LidarWorkerTest
     @Test
     public void testAddObject_NoError() 
     {
-        DetectedObject obj = new DetectedObject("Wall_1", "A Wall");
+        DetectedObject obj = new DetectedObject("Wall_1", "Wall");
         lidar.addObject(obj, 2);
 
         // The camera should store it in a new StampedDetectedObjects
@@ -27,5 +28,14 @@ public class LidarWorkerTest
         assertEquals(1, lastFrame.size(), "Should have 1 frame after adding an object.");
         assertEquals("Wall_1", lastFrame.get(0).getId());
         assertEquals(1, StatisticalFolder.getInstance().getNumTrackedObjects(), "Stats should have 1 detected object so far.");
+    }
+
+    @Test
+    public void testAddObjects_ErrorInList()
+    {
+        lidar.addObject(new DetectedObject("Wall_1", "Wall"), 2);
+        lidar.addObject(new DetectedObject("ERROR", "LiDar disconnected"), 10);
+        assertEquals(STATUS.ERROR, lidar.getsStatus(), "Camera should be in ERROR status after seeing 'ERROR' ID.");
+        assertEquals(1, StatisticalFolder.getInstance().getNumTrackedObjects(), "No objects should be counted after an error was found.");
     }
 }
