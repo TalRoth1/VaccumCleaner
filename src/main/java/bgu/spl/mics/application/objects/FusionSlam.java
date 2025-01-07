@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -353,12 +352,12 @@ public class FusionSlam
         {
             info = stats;
         }
-
-        
         try (FileWriter writer = new FileWriter(path + "output_file.json")) {
             gson.toJson(info, writer);
             System.out.println("Output file generated at: " + path + "output_file.json");
-        } catch (IOException e) {
+        } 
+        catch (IOException e)
+        {
             System.err.println("Failed to write output file: " + e.getMessage());
             e.printStackTrace(); 
         }

@@ -52,19 +52,15 @@ public class LiDarService extends MicroService {
     {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             currentTime = tick.getTick();
-            if (liDar.getsStatus() == STATUS.ERROR) {
+            if (liDar.getsStatus() == STATUS.ERROR) 
+            {
                 String sensorName = "LiDar" + liDar.getId();
                 sendBroadcast(new CrashedBroadcast(sensorName));
                 terminate();
                 return;
             }
-            if (shutdownReceived) {
-                sendBroadcast(new TerminatedBroadcast(this.getName()));
-                terminate();
-                System.out.println("shoutdown recieved");
-                return;
-            }
-            if (liDar.getsStatus() == STATUS.DOWN) {
+            if (liDar.getsStatus() == STATUS.DOWN)
+            {
                 sendBroadcast(new TerminatedBroadcast(this.getName()));
                 sendBroadcast(new ShutdownBroadcast());
                 terminate();
@@ -82,7 +78,9 @@ public class LiDarService extends MicroService {
             }
         });
         subscribeBroadcast(ShutdownBroadcast.class, shutdown -> {
-            shutdownReceived = true;
+            sendBroadcast(new TerminatedBroadcast(this.getName()));
+            terminate();
+            System.out.println("shoutdown recieved");
         });
         subscribeBroadcast(TerminatedBroadcast.class, term -> {
             if(term.getServiceName().equals("TimeService")){
