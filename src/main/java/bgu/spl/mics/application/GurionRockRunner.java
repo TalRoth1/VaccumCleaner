@@ -43,7 +43,7 @@ public class GurionRockRunner {
     public static void main(String[] args) //gets one arg, the path to config file 
     {
         
-        String configPath = "C:\\Users\\Asus\\Desktop\\spl2\\VaccumCleaner\\example input\\configuration_file.json";
+        String configPath = "D:\\Projects\\SPL\\Vaccum Cleaner\\example_input_2\\configuration_file.json";
         String [] arg = configPath.split("\\\\");
         String path = "";
         for (int i = 0; i<arg.length - 1; i++)

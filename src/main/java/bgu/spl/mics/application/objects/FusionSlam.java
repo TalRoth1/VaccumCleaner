@@ -256,6 +256,7 @@ public class FusionSlam
     public void printOutputFile(String path, List<Camera> cameras, List<LiDarWorkerTracker> lidars)
     {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String name = "output_file.json";
         Map<String, Object>info = new LinkedHashMap<>();
         Map<String, Object>stats = new LinkedHashMap<>();
         boolean error = FusionSlam.getInstance().isErrorOccurred();
@@ -288,6 +289,7 @@ public class FusionSlam
         }
         if (error)
         {
+            name = "OutputError.json";
             if(classification[0].equals("Camera"))
             {
                 for(Camera cam : cameras)
@@ -352,7 +354,7 @@ public class FusionSlam
         {
             info = stats;
         }
-        try (FileWriter writer = new FileWriter(path + "output_file.json")) {
+        try (FileWriter writer = new FileWriter(path + name)) {
             gson.toJson(info, writer);
             System.out.println("Output file generated at: " + path + "output_file.json");
         } 

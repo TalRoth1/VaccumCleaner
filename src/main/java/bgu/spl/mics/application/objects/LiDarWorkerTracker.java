@@ -138,12 +138,19 @@ public class LiDarWorkerTracker
         return null; // Return null if no matching tracked object is found
     }
 
-    public synchronized List<TrackedObject> getObjects(int time) {
+    public synchronized List<TrackedObject> getObjects(int time)
+    {
         List<TrackedObject> result = new LinkedList<>();
-        for (TrackedObject obj : lastTrackedObjects) {
-            if (obj.getTime() <= time) {
-                result.add(obj);// if i try to remove from list after choose we cant
+        for (TrackedObject obj : lastTrackedObjects)
+        {
+            if (obj.getTime() <= time)
+            {
+                result.add(obj);
             }
+        }
+        for (TrackedObject obj : result)
+        {
+            lastTrackedObjects.remove(obj);
         }
         List<StampedDetectedObjects> pendingForTime = pendingObjects.get(time);
         if (pendingForTime != null) {

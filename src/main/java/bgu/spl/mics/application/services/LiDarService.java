@@ -96,11 +96,13 @@ public class LiDarService extends MicroService {
             int detectionTime = detectEvt.getStampedDetectedObjects().getTime();
 
             for (DetectedObject obj : detectEvt.getObjects()) {
-                if (obj == null) {
+                if (obj == null)
+                {
                     System.out.println(getName() + ": Encountered null DetectedObject in DetectObjectsEvent.");
                     continue;
                 }
-                try {
+                try
+                {
                     liDar.addObject(obj, detectionTime);
                 } catch (Exception e) {
                     e.printStackTrace();
