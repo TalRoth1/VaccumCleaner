@@ -1,13 +1,7 @@
-package bgu.spl.mics.application.services;
+package bgu.spl.mics.application.objects;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import bgu.spl.mics.application.objects.Camera;
-import bgu.spl.mics.application.objects.DetectedObject;
-import bgu.spl.mics.application.objects.STATUS;
-import bgu.spl.mics.application.objects.StampedDetectedObjects;
-import bgu.spl.mics.application.objects.StatisticalFolder;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -22,7 +16,7 @@ public class CameraTest {
 
     @BeforeEach
     public void setUp() {
-        stats= StatisticalFolder.getInstance();
+        stats = StatisticalFolder.getInstance();
         camera = new Camera(1, 2); // id=1, freq=2, some stats folder
     }
 
@@ -32,10 +26,9 @@ public class CameraTest {
         camera.addObject(obj, 5);  // time=5
 
         // The camera should store it in a new StampedDetectedObjects
-        List<StampedDetectedObjects> lastFrame = camera.getLastDetectedFrame();
-        assertFalse(lastFrame.isEmpty(), "Last frame should contain the newly added object");
-        assertEquals("Chair_1", lastFrame.get(0).getObjects().get(0).getId());
-
+        List<DetectedObject> lastFrame = camera.getObjects(5);
+        assertEquals(1, lastFrame.size(), "Should have 1 frame after adding an object.");
+        assertEquals("Chair_1", lastFrame.get(0).getId());
         assertEquals(1, stats.getNumDetectedObjects(), "Stats should have 1 detected object so far.");
     }
 
@@ -46,6 +39,7 @@ public class CameraTest {
         objs.add(new DetectedObject("ERROR", "Camera disconnected"));
 
         camera.addObjects(objs, 10);
+        List<DetectedObject> objects = camera.getObjects(10);
         // If camera logic sets status=ERROR upon detecting "ERROR" ID:
         assertEquals(STATUS.ERROR, camera.getStat(), "Camera should be in ERROR status after seeing 'ERROR' ID.");
         assertEquals(0, stats.getNumDetectedObjects(), "No objects should be counted after an error was found.");

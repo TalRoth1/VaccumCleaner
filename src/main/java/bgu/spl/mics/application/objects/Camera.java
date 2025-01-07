@@ -69,9 +69,9 @@ public class Camera {
                 this.stat = STATUS.ERROR;
                 return result;
             }
-            StatisticalFolder.getInstance().incrementDetectedObjects(1);
             result.add(obj);
         }
+        StatisticalFolder.getInstance().incrementDetectedObjects(sdo.getObjects().size());
         lastDetectedFrame.clear();
         lastDetectedFrame.add(sdo);
         return result;

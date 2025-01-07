@@ -251,7 +251,7 @@ public class FusionSlam
         {
             classification = errorObj.split(" ");
         }
-        stats.put("systemRuntime", StatisticalFolder.getInstance().getRuntime()); // add all the nececary information.
+        stats.put("systemRuntime", StatisticalFolder.getInstance().getRuntime());
         stats.put("numDetectedObjects", StatisticalFolder.getInstance().getNumDetectedObjects());
         stats.put("numTrackedObjects", StatisticalFolder.getInstance().getNumTrackedObjects());
         System.out.println(StatisticalFolder.getInstance().getNumLandmarks() + " num statistical folder"+ landmarks.size()+ " num landmarks file");

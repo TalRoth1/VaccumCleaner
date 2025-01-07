@@ -1,14 +1,7 @@
-package bgu.spl.mics.application.services;
+package bgu.spl.mics;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import bgu.spl.mics.Broadcast;
-import bgu.spl.mics.Event;
-import bgu.spl.mics.Future;
-import bgu.spl.mics.Message;
-import bgu.spl.mics.MessageBusImpl;
-import bgu.spl.mics.MicroService;
 public class MessageBusImplTest {
 
     private MessageBusImpl bus;
