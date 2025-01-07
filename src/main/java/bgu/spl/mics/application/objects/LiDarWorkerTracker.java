@@ -141,7 +141,6 @@ public class LiDarWorkerTracker
     public synchronized List<TrackedObject> getObjects(int time) {
         List<TrackedObject> result = new LinkedList<>();
         for (TrackedObject obj : lastTrackedObjects) {
-            System.out.println("Object time: " + obj.getTime() + " | Requested time: " + time);
             if (obj.getTime() <= time) {
                 result.add(obj);// if i try to remove from list after choose we cant
             }
